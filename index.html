@@ -32,14 +32,14 @@
             position: relative;
         }
 
+        /* Swiping disabled globally to isolate touch events */
         .master-horizontal-scroller {
             display: flex;
             flex-grow: 1;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
+            overflow-x: hidden; /* Disabled native snap scroll */
             width: 100%;
             height: 100%;
+            padding-bottom: 80px; /* Leave room for the swipe zone */
         }
         .master-horizontal-scroller::-webkit-scrollbar { display: none; }
 
@@ -47,7 +47,6 @@
             min-width: 100vw; 
             width: 100vw;
             height: 100%;
-            scroll-snap-align: start;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -56,16 +55,20 @@
         }
         .app-surface::-webkit-scrollbar { display: none; }
 
-        .fixed-navigation-deck {
+        /* DEDICATED SWIPE ZONE AT BOTTOM */
+        .bottom-swipe-zone {
             position: absolute;
-            bottom: 30px;
+            bottom: 0;
             left: 0;
             width: 100%;
+            height: 80px;
+            background: linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0) 100%);
             display: flex;
             justify-content: center;
-            gap: 10px;
-            z-index: 90;
-            pointer-events: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            cursor: pointer;
         }
         .nav-dot { width: 6px; height: 6px; border-radius: 50%; background-color: rgba(255,255,255,0.15); transition: 0.3s; }
         .nav-dot.active { background-color: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
@@ -94,19 +97,18 @@
         /* ==========================================================================
            3. SURFACE 2: INSTRUMENT DASHBOARD CORE ENGINE
            ========================================================================== */
-        .dashboard-engine { display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-grow: 1; padding: 20px 24px 80px 24px; gap: 15px; }
+        .dashboard-engine { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; flex-grow: 1; padding: 20px 24px 20px 24px; gap: 20px; }
         
         .dial-outer-container { position: relative; width: 230px; height: 230px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .vector-ring-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         
         .center-readout-hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 30; width: 140px; height: 140px; border-radius: 50%; pointer-events: auto; cursor: pointer; }
         .display-temp-value { font-size: 48px; font-weight: 200; color: #ffffff; line-height: 1; pointer-events: none; }
-        .display-session-time { font-size: 14px; letter-spacing: 1px; color: #555; font-weight: 600; margin-top: 4px; text-transform: uppercase; pointer-events: none; }
+        .display-session-time { font-size: 14px; letter-spacing: 1px; color: #555; font-weight: 600; margin-top: 4px; text-transform: uppercase; pointer-events: none; transition: color 0.3s; }
 
         @keyframes pulseAlert { 0% { color: #555; } 50% { color: #00e5ff; } 100% { color: #555; } }
         .pulse-text { animation: pulseAlert 1.5s infinite; font-weight: 700 !important; }
 
-        /* Sliders explicitly structured above canvas layers to catch touches */
         .native-temp-slider { position: absolute; top: 0; left: 0; width: 100%; height: 60%; opacity: 0; z-index: 25; cursor: pointer; }
         .native-time-slider { position: absolute; bottom: 0; left: 0; width: 100%; height: 40%; opacity: 0; z-index: 25; cursor: pointer; }
 
@@ -121,7 +123,7 @@
         .label-flux-low { bottom: 6px; right: 8px; color: #666; }
 
         /* Slide Firing Track Deck */
-        .activation-deck { width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 10px; }
+        .activation-deck { width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; margin-top: auto; }
         .sesh-slider-track { position: relative; width: 100%; height: 56px; background-color: #1c1c1e; border-radius: 28px; border: 1px solid #2c2c2e; display: flex; align-items: center; overflow: hidden; }
         .sesh-track-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, rgba(0,229,255,0.2), var(--current-glow, #00e5ff)); z-index: 1; pointer-events: none; }
         .slider-instruction-prompt { position: absolute; width: 100%; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #555; text-transform: uppercase; z-index: 2; pointer-events: none; }
@@ -165,21 +167,17 @@
         .action-button-deck { padding: 0 24px; display: flex; flex-direction: column; gap: 12px; }
         .primary-save-btn { width: 100%; background-color: #ffffff; color: #000000; border: none; border-radius: 12px; padding: 16px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
         .secondary-delete-btn { width: 100%; background: transparent; color: #ff1744; border: none; padding: 10px; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-
         .settings-placeholder-row { display: flex; justify-content: space-between; align-items: center; background-color: #1c1c1e; border: 1px solid #2c2c2e; padding: 18px 20px; border-radius: 12px; margin-bottom: 14px; font-size: 15px; font-weight: 500; color: #e5e5e5; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="fixed-navigation-deck">
-        <div class="nav-dot"></div>
-        <div class="nav-dot active"></div> 
-        <div class="nav-dot"></div>
-    </div>
-
+    
+    <!-- MAIN VIEWS CONTINUUM HORIZONTAL ENGINE -->
     <div class="master-horizontal-scroller" id="masterScroller">
         
+        <!-- SURFACE 1: HISTORICAL SESSIONS -->
         <div class="app-surface">
             <div class="surface-header">
                 <div class="left-status-group">
@@ -203,6 +201,7 @@
             </div>
         </div>
 
+        <!-- SURFACE 2: DASHBOARD MONITOR ENGINE -->
         <div class="app-surface" id="dashboardSurface">
             <div class="surface-header">
                 <div class="left-status-group">
@@ -228,6 +227,7 @@
                     </div>
                 </div>
 
+                <!-- HORIZONTAL OSCILLOSCOPE FIELD -->
                 <div class="live-graph-container" id="liveGraphContainer">
                     <div class="graph-label label-temp-high">600°F</div>
                     <div class="graph-label label-temp-low">70°F</div>
@@ -246,6 +246,7 @@
             </div>
         </div>
 
+        <!-- SURFACE 3: CENTRAL STORAGE VAULT -->
         <div class="app-surface">
             <div class="surface-header">
                 <div class="header-action-btn" onclick="openAddProfile()" style="color:#00e5ff; font-weight:700;">＋</div>
@@ -259,6 +260,14 @@
         </div>
     </div>
 
+    <!-- DEDICATED BOTTOM SWIPE ZONE (NAV CONTROLLER) -->
+    <div class="bottom-swipe-zone" id="swipeZone">
+        <div class="nav-dot"></div>
+        <div class="nav-dot active"></div> 
+        <div class="nav-dot"></div>
+    </div>
+
+    <!-- PROFILE MODIFICATION UTILITY PANEL -->
     <div class="sliding-panel-overlay" id="configSuite">
         <div class="surface-header">
             <div class="header-action-btn" onclick="toggleOverlayPanel('configSuite', false)" style="font-size:14px; color:#666;">Cancel</div>
@@ -321,6 +330,7 @@
         </div>
     </div>
 
+    <!-- UTILITIES SETTINGS PANEL -->
     <div class="sliding-panel-overlay" id="settingsSuite">
         <div class="surface-header">
             <div class="header-action-btn"></div>
@@ -343,33 +353,57 @@
 
 <script>
     /* ==========================================================================
-       1. CORE INITIALIZATION LAYER & GESTURE FRAMEWORKS
+       1. GLOBAL ARCHITECTURE & ISOLATED SWIPE CONTROLLER
        ========================================================================== */
     const scroller = document.getElementById('masterScroller');
     const dots = document.querySelectorAll('.nav-dot');
+    let currentPage = 1; // Start on Dashboard
     let currentlyEditingRow = null; 
 
     window.addEventListener('DOMContentLoaded', () => { 
-        setTimeout(() => { scroller.scrollLeft = window.innerWidth; }, 100); 
+        scroller.scrollLeft = window.innerWidth;
+        updateDots();
         initLists(); 
         drawMasterSplitDial(); 
         systemLoop();
     });
 
-    scroller.addEventListener('scroll', () => {
-        const xPos = scroller.scrollLeft; const w = window.innerWidth;
-        dots.forEach(d => d.classList.remove('active'));
-        if (xPos < w * 0.5) dots[0].classList.add('active');
-        else if (xPos >= w * 0.5 && xPos < w * 1.5) dots[1].classList.add('active');
-        else dots[2].classList.add('active');
+    // Handle Swiping only in the designated bottom zone
+    const swipeZone = document.getElementById('swipeZone');
+    let swipeStartX = 0;
+
+    swipeZone.addEventListener('touchstart', e => {
+        swipeStartX = e.touches[0].clientX;
+    }, {passive: true});
+
+    swipeZone.addEventListener('touchend', e => {
+        let swipeEndX = e.changedTouches[0].clientX;
+        if (swipeStartX - swipeEndX > 50) {
+            // Swiped left -> Next page
+            if (currentPage < 2) currentPage++;
+            scrollToPage();
+        } else if (swipeEndX - swipeStartX > 50) {
+            // Swiped right -> Previous page
+            if (currentPage > 0) currentPage--;
+            scrollToPage();
+        }
     });
+
+    function scrollToPage() {
+        scroller.scrollTo({ left: window.innerWidth * currentPage, behavior: 'smooth' });
+        updateDots();
+    }
+
+    function updateDots() {
+        dots.forEach((d, i) => d.classList.toggle('active', i === currentPage));
+    }
 
     function toggleOverlayPanel(panelId, openState) {
         document.getElementById(panelId).classList.toggle('active', openState);
     }
 
     /* ==========================================================================
-       2. DATABASE PROTOCOL & INTERACTION HANDLERS
+       2. LIST SELECTION & INTERACTION COMPILERS
        ========================================================================== */
     const initialDevicePresets = [
         { name: "Flavor Chaser", color: "blue", temp: 400, time: 60 },
@@ -438,7 +472,10 @@
         globalSessionDuration = time;
         document.getElementById('sessionClockReadout').textContent = `${time}s TIME`;
         drawMasterSplitDial();
-        scroller.scrollLeft = window.innerWidth;
+        
+        // Auto-navigate back to dashboard
+        currentPage = 1;
+        scrollToPage();
     }
 
     function openAddProfile() {
@@ -520,7 +557,7 @@
     }
 
     /* ==========================================================================
-       3. HIGH-FIDELITY RADIAL INSTRUMENTATION GRAPHICS
+       3. VECTOR CANVAS DIAL ENGINE
        ========================================================================== */
     const tempInput = document.getElementById('tempInput');
     const dashboardTimeInput = document.getElementById('dashboardTimeInput');
@@ -536,7 +573,7 @@
         const ratio = (val - 350) / (550 - 350); let r, g, b;
         if (ratio < 0.5) { let f = ratio * 2; r = Math.round(0+(255-0)*f); g = Math.round(229+(145-229)*f); b = Math.round(255+(0-255)*f); } 
         else { let f = (ratio - 0.5) * 2; r = 255; g = Math.round(145+(23-145)*f); b = Math.round(0+(68-0)*f); }
-        return `rgb(${r}, ${g}, ${b})`;
+        return `rgb(${r}, ${g}, b)`;
     }
 
     sfTemp.addEventListener('input', () => {
@@ -572,7 +609,7 @@
     dashboardTimeInput.addEventListener('input', () => { if(appState === 'IDLE') { globalSessionDuration = parseInt(dashboardTimeInput.value); document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`; drawMasterSplitDial(); }});
 
     /* ==========================================================================
-       4. THE LIVE STATE MACHINE (TELEMETRY GRAPH PHYSICS) - HOLD TO INHALE
+       4. STATE ENGINE PHYSICS & MONITORS (HOLD TO DRAW)
        ========================================================================== */
     const liveCanvas = document.getElementById('liveGraphCanvas');
     const liveCtx = liveCanvas.getContext('2d');
@@ -597,7 +634,6 @@
             sessionClockReadout.classList.remove('pulse-text');
             
             if (!countdownInterval) {
-                clockRunningValue = globalSessionDuration;
                 countdownInterval = setInterval(() => {
                     if (appState === 'EXTRACTING') {
                         clockRunningValue--;
@@ -619,6 +655,7 @@
         }
     }
 
+    // Event bindings for the "Hold to Draw" touch features
     [centerDrawSensor, graphContainer].forEach(target => {
         target.addEventListener('mousedown', engageInhalation);
         target.addEventListener('touchstart', engageInhalation, {passive: false});
@@ -669,7 +706,7 @@
     });
 
     seshInput.addEventListener('change', () => {
-        if(appState !== 'IDLE') return;
+        if(appState !== 'IDLE') { abortSession(); return; }
         let val = parseInt(seshInput.value);
         if (val >= 90) {
             seshInput.value = 100; trackFill.style.width = "100%"; 
@@ -685,7 +722,12 @@
             liveTemp += (AMBIENT_TEMP - liveTemp) * 0.05; liveFlux += (0 - liveFlux) * 0.1;
         } else if (appState === 'MELTING') {
             liveFlux = 70 + (Math.random() * 8); liveTemp += (MELT_TEMP - liveTemp) * 0.08;
-            if (Math.abs(liveTemp - MELT_TEMP) < 2) { appState = 'HOLDING'; sessionClockReadout.textContent = "HOLD TO DRAW"; sessionClockReadout.style.color = "#00e5ff"; sessionClockReadout.classList.add('pulse-text'); }
+            if (Math.abs(liveTemp - MELT_TEMP) < 2) { 
+                appState = 'HOLDING'; 
+                sessionClockReadout.textContent = "HOLD TO DRAW"; 
+                sessionClockReadout.style.color = "#00e5ff"; 
+                sessionClockReadout.classList.add('pulse-text'); 
+            }
         } else if (appState === 'HOLDING') {
             liveTemp += (MELT_TEMP - liveTemp) * 0.1; liveFlux = 10 + (Math.random() * 3);
         } else if (appState === 'EXTRACTING') {
@@ -730,6 +772,8 @@
         }
         ctx.stroke(); ctx.shadowBlur = 0;
     }
+
+    setTimeout(() => { drawMasterSplitDial(); systemLoop(); }, 150);
 </script>
 </body>
 </html>
