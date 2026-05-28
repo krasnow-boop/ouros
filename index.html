@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ouros Master Telemetry System</title>
+    <style>
+        /* ==========================================================================
+           1. CORE SYSTEM THEME RESET & VIEWPORT FIXES
+           ========================================================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            background-color: #0d0d0d;
+            width: 100vw;
+            height: 100dvh; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            -webkit-user-select: none;
+            user-select: none;
+            overflow: hidden;
+            position: fixed;
+        }
+
+        .iphone-frame { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
+
+        .master-horizontal-scroller { display: flex; flex-grow: 1; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+        .master-horizontal-scroller::-webkit-scrollbar { display: none; }
+
+        .app-surface { min-width: 100vw; width: 100vw; height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; overflow-y: auto; background-color: #121212; position: relative; }
+        .app-surface::-webkit-scrollbar { display: none; }
+
+        .fixed-navigation-deck { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 90; pointer-events: none; }
+        .nav-dot { width: 6px; height: 6px; border-radius: 50%; background-color: rgba(255,255,255,0.15); transition: 0.3s; }
+        .nav-dot.active { background-color: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
+
+        /* ==========================================================================
+           2. PREMIUM TELEMETRY STATUS HEADERS
+           ========================================================================== */
+        .surface-header { display: flex; justify-content: space-between; align-items: center; padding: 55px 24px 15px 24px; border-bottom: 1px solid #1c1c1c; background-color: rgba(18,18,18,0.95); position: sticky; top: 0; z-index: 20; }
+        .surface-header .title { font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #e5e5e5; text-transform: uppercase; }
+        .left-status-group { display: flex; align-items: center; gap: 8px; width: 60px; }
+        .left-status-group svg { fill: #ffffff; width: 16px; height: 16px; opacity: 0.9; }
+        .right-status-group { display: flex; align-items: center; gap: 6px; width: 60px; justify-content: flex-end; }
+        .right-status-group .battery-percentage { font-size: 11px; font-weight: 600; color: #ffffff; letter-spacing: -0.2px; opacity: 0.9; }
+        .right-status-group svg { fill: #ffffff; width: 22px; height: 12px; opacity: 0.9; }
+        .header-action-btn { font-size: 18px; color: #555; width: 20px; text-align: center; cursor: pointer; transition: color 0.2s; }
+        .header-action-btn:hover { color: #00e5ff; }
+        .section-header { font-size: 11px; letter-spacing: 1.5px; color: #555; font-weight: 700; padding: 24px 24px 10px 24px; text-transform: uppercase; }
+
+        /* ==========================================================================
+           3. SURFACE 1: TELEMETRY ANALYSIS LOGROOM
+           ========================================================================== */
+        .telemetry-card { background-color: #18181a; border: 1px solid #222; border-radius: 14px; margin: 0 24px 16px 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+        .card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #555; text-transform: uppercase; font-weight: 600; }
+        .card-title { font-size: 15px; font-weight: 500; color: #fff; }
+        .history-graph-wrapper { width: 100%; height: 70px; background: #121212; border-radius: 6px; border: 1px solid #2c2c2e; position: relative; overflow: hidden; }
+        .history-graph-canvas { width: 100%; height: 100%; }
+
+        /* ==========================================================================
+           4. SURFACE 2: DASHBOARD CONSOLE (DIAL + LIVE GRAPH)
+           ========================================================================== */
+        .dashboard-engine { display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-grow: 1; padding: 20px 24px 80px 24px; gap: 20px; }
+        
+        .dial-outer-container { position: relative; width: 230px; height: 230px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .vector-ring-canvas { position: absolute; top: 0; left: 0; width: 230px; height: 230px; z-index: 1; pointer-events: none; }
+        
+        .center-readout-hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2; width: 150px; height: 150px; border-radius: 50%; pointer-events: auto; cursor: pointer; }
+        .display-temp-value { font-size: 46px; font-weight: 200; color: #ffffff; line-height: 1; pointer-events: none; }
+        .display-session-time { font-size: 14px; letter-spacing: 1px; color: #555; font-weight: 600; margin-top: 6px; text-transform: uppercase; transition: color 0.3s; pointer-events: none; }
+
+        @keyframes pulseAlert { 0% { color: #555; transform: scale(1); } 50% { color: #00e5ff; transform: scale(1.05); } 100% { color: #555; transform: scale(1); } }
+        .pulse-text { animation: pulseAlert 1.5s infinite; font-weight: 700 !important; }
+
+        .native-temp-slider { position: absolute; top: 0; left: 0; width: 100%; height: 66%; opacity: 0; z-index: 10; cursor: pointer; }
+        .native-time-slider { position: absolute; bottom: 0; left: 0; width: 100%; height: 33%; opacity: 0; z-index: 11; cursor: pointer; }
+
+        /* LIVE TELEMETRY GRAPH GRID (Sleek Horizontal Config) */
+        .live-graph-container { width: 100%; flex-grow: 1; min-height: 80px; height: 80px; background-color: #151517; border: 1px solid #2c2c2e; border-radius: 12px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 15; }
+        .live-graph-canvas { width: 100%; height: 100%; z-index: 2; position: absolute; top: 0; left: 0; pointer-events: none; }
+        
+        .graph-label { position: absolute; font-size: 9px; font-weight: 700; color: #444; z-index: 3; pointer-events: none; }
+        .label-temp-high { top: 6px; left: 8px; }
+        .label-temp-low { bottom: 6px; left: 8px; }
+        .label-flux-high { top: 6px; right: 8px; color: #666; }
+        .label-flux-low { bottom: 6px; right: 8px; color: #666; }
+
+        /* Sesh Slider */
+        .activation-deck { width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .sesh-slider-track { position: relative; width: 100%; height: 56px; background-color: #1c1c1e; border-radius: 28px; border: 1px solid #2c2c2e; display: flex; align-items: center; overflow: hidden; }
+        .sesh-track-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, rgba(0,229,255,0.2), var(--current-glow, #00e5ff)); z-index: 1; pointer-events: none; transition: width 0.05s linear;}
+        .slider-instruction-prompt { position: absolute; width: 100%; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #555; text-transform: uppercase; z-index: 2; pointer-events: none; }
+        .native-sesh-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 100%; background: transparent; position: absolute; z-index: 3; cursor: pointer; outline: none; }
+        .native-sesh-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 52px; height: 52px; border-radius: 26px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+
+        /* ==========================================================================
+           5. SURFACE 3 & MODALS
+           ========================================================================== */
+        .swipe-row-wrapper { position: relative; width: 100%; height: 58px; overflow: hidden; border-bottom: 1px solid #1a1a1a; background-color: #1c1c1e; }
+        .swipe-row-content { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-color: #121212; display: flex; align-items: center; padding: 0 24px; z-index: 2; transform: translateX(0); transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; }
+        .swipe-row-wrapper.open .swipe-row-content { transform: translateX(-75px); }
+        .action-reveal { position: absolute; right: 0; top: 0; width: 75px; height: 100%; background-color: #1c1c1e; display: flex; justify-content: center; align-items: center; z-index: 1; cursor: pointer; }
+        .wrench-icon { font-size: 16px; color: #ffffff; transition: transform 0.2s; }
+        .action-reveal:active .wrench-icon { transform: scale(0.9); }
+        .row-text { font-size: 14px; font-weight: 400; color: #dcdcdc; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 16px; box-shadow: 0 0 10px currentColor; flex-shrink: 0; }
+        .dot.blue { color: #00e5ff; background-color: #00e5ff; }
+        .dot.orange { color: #ff9100; background-color: #ff9100; }
+        .dot.red { color: #ff1744; background-color: #ff1744; }
+        .dot.white { color: #ffffff; background-color: #ffffff; }
+        .bullet { font-size: 14px; color: #3a3a3c; margin-right: 18px; padding-left: 2px; }
+
+        .sliding-panel-overlay { position: absolute; left: 0; top: 100%; width: 100%; height: 100%; background-color: #121212; z-index: 500; display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); padding-bottom: 40px; }
+        .sliding-panel-overlay.active { transform: translateY(-100%); }
+        .panel-scroller { flex-grow: 1; overflow-y: auto; padding: 24px; }
+        .panel-scroller::-webkit-scrollbar { display: none; }
+        
+        .form-block { display: flex; flex-direction: column; margin-bottom: 24px; }
+        .form-block label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #555; font-weight: 700; margin-bottom: 12px; }
+        .input-text-field { background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; padding: 14px; font-size: 16px; color: #fff; outline: none; }
+        .slider-readout-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .param-value-output { font-size: 16px; font-weight: 600; color: #00e5ff; }
+        
+        .form-range-input { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: #2c2c2e; border-radius: 3px; outline: none; }
+        .form-range-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 2px solid #00e5ff; cursor: pointer; }
+        .custom-dropdown-select { background-color: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; padding: 14px; font-size: 15px; color: #e5e5e5; outline: none; -webkit-appearance: none; cursor: pointer;}
+        
+        .action-button-deck { padding: 0 24px; display: flex; flex-direction: column; gap: 12px; }
+        .primary-save-btn { width: 100%; background-color: #ffffff; color: #000000; border: none; border-radius: 12px; padding: 16px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+        .secondary-delete-btn { width: 100%; background: transparent; color: #ff1744; border: none; padding: 10px; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+        
+        .settings-placeholder-row { display: flex; justify-content: space-between; align-items: center; background-color: #1c1c1e; border: 1px solid #2c2c2e; padding: 18px 20px; border-radius: 12px; margin-bottom: 14px; font-size: 15px; font-weight: 500; color: #e5e5e5; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="iphone-frame">
+    <div class="fixed-navigation-deck">
+        <div class="nav-dot"></div>
+        <div class="nav-dot active"></div> 
+        <div class="nav-dot"></div>
+    </div>
+
+    <div class="master-horizontal-scroller" id="masterScroller">
+        
+        <!-- ==========================================
+             SURFACE 1: TELEMETRY LOGS 
+             ========================================== -->
+        <div class="app-surface">
+            <div class="surface-header">
+                <div class="left-status-group">
+                    <svg viewBox="0 0 24 24"><path d="M12 21l-12-11.64c.54-.53 4.96-4.36 12-4.36s11.46 3.83 12 4.36l-12 11.64zm0-13.6c-4.93 0-8.2 2.3-9.15 3.03l9.15 8.87 9.15-8.87c-.95-.73-4.22-3.03-9.15-3.03z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M7 17l5-5-5-5h3l5 5-5 5h-3zm5-15l-1 1v7.17l-3.59-3.58-1.41 1.41 4.59 4.59-4.59 4.59 1.41 1.41 3.59-3.59v7.17l1 1 6-6-4.5-4.5 4.5-4.5-6-6zm1 3.41l2.5 2.5-2.5 2.5v-5zm0 10.18l2.5 2.5-2.5 2.5v-5z"/></svg>
+                </div>
+                <div class="title">Telemetry Logs</div>
+                <div class="right-status-group">
+                    <span class="battery-percentage">100%</span>
+                    <svg viewBox="0 0 24 12"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="3" y="3" width="16" height="6" rx="1"/></svg>
+                </div>
+            </div>
+            <div class="section-header">Historical Sessions</div>
+            
+            <div id="historyLogContainer">
+                <!-- Static Fallback Examples -->
+                <div class="telemetry-card">
+                    <div class="card-meta"><span>May 27, 9:14 PM</span><span>Target: 400°F</span></div>
+                    <div class="card-title">Flavor Chaser</div>
+                    <div class="history-graph-wrapper"><div class="mock-flatline-tfr" style="top:30px; background: linear-gradient(90deg, #00e5ff, #ff9100);"></div></div>
+                    <div class="card-meta"><span>Peak Flux: 45W</span><span style="color:#555;">Duration: 60s</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             SURFACE 2: ACTIVE DASHBOARD (LIVE GRAPH)
+             ========================================== -->
+        <div class="app-surface" id="dashboardSurface">
+            <div class="surface-header">
+                <div class="left-status-group">
+                    <svg viewBox="0 0 24 24"><path d="M12 21l-12-11.64c.54-.53 4.96-4.36 12-4.36s11.46 3.83 12 4.36l-12 11.64zm0-13.6c-4.93 0-8.2 2.3-9.15 3.03l9.15 8.87 9.15-8.87c-.95-.73-4.22-3.03-9.15-3.03z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M7 17l5-5-5-5h3l5 5-5 5h-3zm5-15l-1 1v7.17l-3.59-3.58-1.41 1.41 4.59 4.59-4.59 4.59 1.41 1.41 3.59-3.59v7.17l1 1 6-6-4.5-4.5 4.5-4.5-6-6zm1 3.41l2.5 2.5-2.5 2.5v-5zm0 10.18l2.5 2.5-2.5 2.5v-5z"/></svg>
+                </div>
+                <div class="title">OUROS ACTIVE</div>
+                <div class="right-status-group">
+                    <span class="battery-percentage">100%</span>
+                    <svg viewBox="0 0 24 12"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="3" y="3" width="16" height="6" rx="1"/></svg>
+                </div>
+            </div>
+            
+            <div class="dashboard-engine">
+                <div class="dial-outer-container">
+                    <input type="range" min="350" max="550" value="450" class="native-temp-slider" id="tempInput" step="5">
+                    <input type="range" min="30" max="120" value="45" class="native-time-slider" id="dashboardTimeInput" step="5">
+                    <canvas class="vector-ring-canvas" id="dialCanvas" width="460" height="460"></canvas>
+                    
+                    <div class="center-readout-hub" id="centerDrawSensor">
+                        <div class="display-temp-value" id="tempReadout">450°F</div>
+                        <div class="display-session-time" id="sessionClockReadout">45s TIME</div>
+                    </div>
+                </div>
+
+                <!-- LIVE TELEMETRY GRAPH - Hold to Inhale Target -->
+                <div class="live-graph-container" id="liveGraphContainer">
+                    <div class="graph-label label-temp-high">600°F</div>
+                    <div class="graph-label label-temp-low">70°F</div>
+                    <div class="graph-label label-flux-high">80W</div>
+                    <div class="graph-label label-flux-low">0W</div>
+                    <canvas class="live-graph-canvas" id="liveGraphCanvas" width="800" height="160"></canvas>
+                </div>
+
+                <!-- Activation Deck -->
+                <div class="activation-deck">
+                    <div class="sesh-slider-track">
+                        <div class="slider-instruction-prompt" id="promptText">Slide to Sesh</div>
+                        <div class="sesh-track-fill" id="trackFill"></div>
+                        <input type="range" min="0" max="100" value="0" class="native-sesh-slider" id="seshInput">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             SURFACE 3: PROFILE VAULT ARCHIVE
+             ========================================== -->
+        <div class="app-surface">
+            <div class="surface-header">
+                <div class="header-action-btn" onclick="openAddProfile()" style="color:#00e5ff; font-weight:700;">＋</div>
+                <div class="title">Profile Vault</div>
+                <div class="header-action-btn" onclick="toggleOverlayPanel('settingsSuite', true)">⚙️</div>
+            </div>
+
+            <div class="section-header">On-Device Presets</div>
+            <div id="devicePresetsList"></div>
+
+            <div class="section-header">My Vault Library</div>
+            <div id="vaultLibraryList"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         PANEL OVERLAYS (CREATION SUITE & SETTINGS)
+         ========================================================================== -->
+    <div class="sliding-panel-overlay" id="configSuite">
+        <div class="surface-header">
+            <div class="header-action-btn" onclick="toggleOverlayPanel('configSuite', false)" style="font-size:14px; color:#666;">Cancel</div>
+            <div class="title" id="suiteTitle">New App Profile</div>
+            <div class="header-action-btn"></div>
+        </div>
+        <div class="panel-scroller">
+            <div class="form-block">
+                <label>Profile Identifier Label</label>
+                <input type="text" class="input-text-field" id="formProfileName" value="New Custom Extract">
+            </div>
+            <div class="form-block">
+                <div class="slider-readout-wrapper"><label>Temperature Threshold</label><div class="param-value-output" id="valTemp">450°F</div></div>
+                <input type="range" min="350" max="550" value="450" step="5" class="form-range-input" id="slideFormTemp">
+            </div>
+            <div class="form-block">
+                <div class="slider-readout-wrapper"><label>Session Window Duration</label><div class="param-value-output" id="valTime" style="color:#ffffff;">45s</div></div>
+                <input type="range" min="30" max="120" value="45" step="5" class="form-range-input" id="slideFormTime">
+            </div>
+            
+            <!-- Restored LED Settings -->
+            <div class="form-block">
+                <label>LED Base Identification Color</label>
+                <select class="custom-dropdown-select">
+                    <option>Ion Cyan Accent</option>
+                    <option>Deep Amethyst Orchid</option>
+                    <option>Crimson Red Fury</option>
+                    <option>Emerald Sativa Green</option>
+                    <option>Raw Titanium White</option>
+                </select>
+            </div>
+            <div class="form-block">
+                <label>LED Core Animation Sequence</label>
+                <select class="custom-dropdown-select">
+                    <option>Solid Continuous Burn</option>
+                    <option>Slow Breathing Thermal Wave</option>
+                    <option>Rotating Orbit Tracking Loop</option>
+                    <option>Haptic Pulse Telemetry</option>
+                </select>
+            </div>
+            
+            <!-- New Temperature Curve Setting -->
+            <div class="form-block">
+                <label>Temperature Curve</label>
+                <select class="custom-dropdown-select" id="tempCurveSelect">
+                    <option value="steady">Steady</option>
+                    <option value="crescendo">Crescendo</option>
+                </select>
+            </div>
+
+            <div class="form-block">
+                <label>Direct Sync to Device Memory Position</label>
+                <select class="custom-dropdown-select" id="hardwareSlotSelect" style="border-color:#333; color:#888;">
+                    <option value="unassigned">Unassigned (Store in Vault Only)</option>
+                    <option value="blue">🔵 Blue On-Device Memory Slot</option>
+                    <option value="orange">🟠 Orange On-Device Memory Slot</option>
+                    <option value="red">🔴 Red On-Device Memory Slot</option>
+                    <option value="white">⚪ White On-Device Memory Slot</option>
+                </select>
+            </div>
+        </div>
+        <div class="action-button-deck">
+            <button class="primary-save-btn" id="saveProfileBtn" onclick="executeProfileSave()">Save Profile</button>
+            <button class="secondary-delete-btn" id="deleteResetBtn" onclick="toggleOverlayPanel('configSuite', false)">Delete Profile</button>
+        </div>
+    </div>
+
+    <div class="sliding-panel-overlay" id="settingsSuite">
+        <div class="surface-header">
+            <div class="header-action-btn"></div>
+            <div class="title">Device Settings</div>
+            <div class="header-action-btn"></div>
+        </div>
+        <div class="panel-scroller" style="padding-top: 15px;">
+            <div class="section-header" style="padding: 10px 0 12px 0;">Connectivity</div>
+            <div class="settings-placeholder-row"><span>Wi-Fi Configuration</span><span style="color:#555;">➔</span></div>
+            <div class="settings-placeholder-row"><span>Bluetooth Connection</span><span style="color:#555;">➔</span></div>
+            <div class="section-header" style="padding: 20px 0 12px 0;">Hardware</div>
+            <div class="settings-placeholder-row"><span>Device Calibration</span><span style="color:#555;">➔</span></div>
+            <div class="settings-placeholder-row"><span>Firmware Update</span><span style="color:#555;">➔</span></div>
+        </div>
+        <div class="action-button-deck" style="padding: 0 24px 10px 24px;">
+            <button class="primary-save-btn" style="background-color: #1c1c1e; color: #ffffff; border: 1px solid #2c2c2e; box-shadow: none;" onclick="toggleOverlayPanel('settingsSuite', false)">Back</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ==========================================================================
+       1. GLOBAL STATE & VIEWPORT ALIGNMENT
+       ========================================================================== */
+    const scroller = document.getElementById('masterScroller');
+    const dots = document.querySelectorAll('.nav-dot');
+    let currentlyEditingRow = null; 
+
+    // iOS Safari Fix: Explicitly scroll to the center dashboard element on load
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            scroller.scrollLeft = window.innerWidth;
+        }, 100);
+    });
+
+    scroller.addEventListener('scroll', () => {
+        const xPos = scroller.scrollLeft;
+        const w = window.innerWidth;
+        dots.forEach(d => d.classList.remove('active'));
+        if (xPos < w * 0.5) dots[0].classList.add('active');
+        else if (xPos >= w * 0.5 && xPos < w * 1.5) dots[1].classList.add('active');
+        else dots[2].classList.add('active');
+    });
+
+    function toggleOverlayPanel(panelId, openState) {
+        const targetPanel = document.getElementById(panelId);
+        if(openState) targetPanel.classList.add('active');
+        else targetPanel.classList.remove('active');
+    }
+
+    /* ==========================================================================
+       2. VAULT CRUD ENGINE & SWIPE PHYSICS
+       ========================================================================== */
+    const initialDevicePresets = [
+        { name: "Flavor Chaser", color: "blue", temp: 400, time: 60 },
+        { name: "Terpene Balance", color: "orange", temp: 450, time: 45 },
+        { name: "Sesh Accelerator", color: "red", temp: 500, time: 30 },
+        { name: "Massive Clouds", color: "white", temp: 550, time: 30 }
+    ];
+
+    const initialVaultLibrary = [
+        { name: "710 Labs Sweeties Live Rosin", temp: 420, time: 50 },
+        { name: "Lazercat Hash Badder Melt", temp: 460, time: 40 },
+        { name: "Olio Mixed Lights Live Resin", temp: 480, time: 40 },
+        { name: "Solventless Squeeze Jam Drop", temp: 430, time: 55 }
+    ];
+
+    function createRowElement(data, isDevicePreset) {
+        let wrapper = document.createElement('div');
+        wrapper.className = 'swipe-row-wrapper';
+        wrapper.dataset.temp = data.temp || 450;
+        wrapper.dataset.time = data.time || 45;
+        
+        let indicator = isDevicePreset ? `<div class="dot ${data.color}"></div>` : `<div class="bullet">•</div>`;
+        
+        wrapper.innerHTML = `
+            <div class="swipe-row-content">
+                ${indicator}
+                <div class="row-text">${data.name}</div>
+            </div>
+            <div class="action-reveal">
+                <div class="wrench-icon">🔧</div>
+            </div>
+        `;
+
+        let content = wrapper.querySelector('.swipe-row-content');
+        let wrench = wrapper.querySelector('.action-reveal');
+        let startX = 0, startY = 0, isDragging = false;
+
+        content.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = false;
+        }, {passive: true});
+        
+        content.addEventListener('touchmove', e => {
+            if(Math.abs(e.touches[0].clientX - startX) > 10) isDragging = true;
+        }, {passive: true});
+
+        content.addEventListener('touchend', e => {
+            let endX = e.changedTouches[0].clientX;
+            if (!isDragging && Math.abs(startX - endX) < 10) {
+                loadProfileToDashboard(wrapper);
+            } else if (startX - endX > 40) {
+                closeAllRows(); wrapper.classList.add('open');
+            } else if (endX - startX > 40) {
+                wrapper.classList.remove('open');
+            }
+        });
+
+        // Desktop mouse support
+        let mStartX = 0;
+        content.addEventListener('mousedown', e => { mStartX = e.clientX; isDragging = false; });
+        content.addEventListener('mousemove', e => { if(Math.abs(e.clientX - mStartX) > 5) isDragging = true; });
+        content.addEventListener('mouseup', e => {
+            let mEndX = e.clientX;
+            if(!isDragging && Math.abs(mStartX - mEndX) < 5) loadProfileToDashboard(wrapper);
+            else if(mStartX - mEndX > 40) { closeAllRows(); wrapper.classList.add('open'); }
+            else if(mEndX - mStartX > 40) wrapper.classList.remove('open');
+        });
+
+        wrench.addEventListener('click', (e) => { e.stopPropagation(); openEditProfile(wrapper); });
+        
+        return wrapper;
+    }
+
+    function initLists() {
+        let presetList = document.getElementById('devicePresetsList');
+        let vaultList = document.getElementById('vaultLibraryList');
+        initialDevicePresets.forEach(p => presetList.appendChild(createRowElement(p, true)));
+        initialVaultLibrary.forEach(p => vaultList.appendChild(createRowElement(p, false)));
+    }
+    initLists();
+
+    function closeAllRows() {
+        document.querySelectorAll('.swipe-row-wrapper').forEach(r => r.classList.remove('open'));
+    }
+
+    function loadProfileToDashboard(row) {
+        if(appState !== 'IDLE') return; // Don't load if firing
+        let t = parseInt(row.dataset.temp);
+        let time = parseInt(row.dataset.time);
+        
+        document.getElementById('tempInput').value = t;
+        document.getElementById('dashboardTimeInput').value = time;
+        globalSessionDuration = time;
+        
+        document.getElementById('sessionClockReadout').textContent = `${time}s TIME`;
+        drawMasterSplitDial();
+        
+        scroller.scrollLeft = window.innerWidth;
+    }
+
+    function openAddProfile() {
+        currentlyEditingRow = null;
+        document.getElementById('suiteTitle').innerText = "New App Profile";
+        document.getElementById('formProfileName').value = "New Custom Extract";
+        document.getElementById('saveProfileBtn').innerText = "Save Profile";
+        document.getElementById('hardwareSlotSelect').value = "unassigned";
+        
+        let delResBtn = document.getElementById('deleteResetBtn');
+        delResBtn.innerText = "Cancel";
+        delResBtn.onclick = function() { toggleOverlayPanel('configSuite', false); };
+
+        toggleOverlayPanel('configSuite', true);
+    }
+
+    function openEditProfile(rowWrapper) {
+        currentlyEditingRow = rowWrapper;
+        let currentName = currentlyEditingRow.querySelector('.row-text').innerText;
+        let dot = currentlyEditingRow.querySelector('.dot'); 
+        
+        document.getElementById('suiteTitle').innerText = "Edit App Profile";
+        document.getElementById('formProfileName').value = currentName;
+        document.getElementById('slideFormTemp').value = currentlyEditingRow.dataset.temp;
+        document.getElementById('slideFormTime').value = currentlyEditingRow.dataset.time;
+        document.getElementById('valTemp').innerText = currentlyEditingRow.dataset.temp + "°F";
+        document.getElementById('valTime').innerText = currentlyEditingRow.dataset.time + "s";
+        
+        let slotSelect = document.getElementById('hardwareSlotSelect');
+        let delResBtn = document.getElementById('deleteResetBtn');
+
+        if (dot) {
+            let color = dot.classList.contains('blue') ? 'blue' :
+                        dot.classList.contains('orange') ? 'orange' :
+                        dot.classList.contains('red') ? 'red' : 'white';
+            slotSelect.value = color;
+
+            delResBtn.innerText = "Remove & Reset Slot";
+            delResBtn.onclick = function() { executeSlotReset(color, currentName); };
+        } else {
+            slotSelect.value = "unassigned";
+            delResBtn.innerText = "Delete Profile";
+            delResBtn.onclick = function() { currentlyEditingRow.remove(); toggleOverlayPanel('configSuite', false); };
+        }
+        
+        toggleOverlayPanel('configSuite', true);
+    }
+
+    function executeProfileSave() {
+        let newName = document.getElementById('formProfileName').value;
+        globalSessionDuration = parseInt(document.getElementById('slideFormTime').value);
+        let tempVal = document.getElementById('slideFormTemp').value;
+        
+        document.getElementById('tempInput').value = tempVal;
+        document.getElementById('dashboardTimeInput').value = globalSessionDuration;
+        document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`;
+        drawMasterSplitDial();
+
+        if (currentlyEditingRow) {
+            currentlyEditingRow.querySelector('.row-text').innerText = newName;
+            currentlyEditingRow.dataset.temp = tempVal;
+            currentlyEditingRow.dataset.time = globalSessionDuration;
+            currentlyEditingRow.classList.remove('open'); 
+        } else {
+            let library = document.getElementById('vaultLibraryList');
+            let newRow = createRowElement({name: newName, temp: tempVal, time: globalSessionDuration}, false);
+            library.insertBefore(newRow, library.firstChild);
+        }
+        toggleOverlayPanel('configSuite', false);
+    }
+
+    function executeSlotReset(color, currentName) {
+        let library = document.getElementById('vaultLibraryList');
+        let newRow = createRowElement({name: currentName, temp: currentlyEditingRow.dataset.temp, time: currentlyEditingRow.dataset.time}, false);
+        library.insertBefore(newRow, library.firstChild);
+
+        const defaultNames = { blue: "Flavor Chaser", orange: "Terpene Balance", red: "Sesh Accelerator", white: "Massive Clouds" };
+        const defaultTemps = { blue: 400, orange: 450, red: 500, white: 550 };
+        currentlyEditingRow.querySelector('.row-text').innerText = defaultNames[color];
+        currentlyEditingRow.dataset.temp = defaultTemps[color];
+        currentlyEditingRow.dataset.time = 45;
+        currentlyEditingRow.classList.remove('open');
+
+        toggleOverlayPanel('configSuite', false);
+    }
+
+    /* ==========================================================================
+       3. HIGH-FIDELITY CANVAS DIAL
+       ========================================================================== */
+    const tempInput = document.getElementById('tempInput');
+    const dashboardTimeInput = document.getElementById('dashboardTimeInput');
+    const canvas = document.getElementById('dialCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const sfTemp = document.getElementById('slideFormTemp');
+    const sfTime = document.getElementById('slideFormTime');
+    const valTemp = document.getElementById('valTemp');
+    const valTime = document.getElementById('valTime');
+
+    function calculateThermalColor(val) {
+        const ratio = (val - 350) / (550 - 350); let r, g, b;
+        if (ratio < 0.5) { let f = ratio * 2; r = Math.round(0+(255-0)*f); g = Math.round(229+(145-229)*f); b = Math.round(255+(0-255)*f); } 
+        else { let f = (ratio - 0.5) * 2; r = 255; g = Math.round(145+(23-145)*f); b = Math.round(0+(68-0)*f); }
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    sfTemp.addEventListener('input', () => {
+        valTemp.textContent = `${sfTemp.value}°F`;
+        valTemp.style.color = calculateThermalColor(parseInt(sfTemp.value));
+    });
+    sfTime.addEventListener('input', () => { valTime.textContent = `${sfTime.value}s`; });
+
+    function drawMasterSplitDial() {
+        if (!canvas.width || canvas.width === 0) return;
+
+        const tVal = parseInt(tempInput.value); 
+        const sVal = parseInt(dashboardTimeInput.value);
+        const color = calculateThermalColor(tVal);
+        
+        document.getElementById('tempReadout').textContent = `${tVal}°F`;
+        document.getElementById('tempReadout').style.color = color;
+        document.documentElement.style.setProperty('--current-glow', color);
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cX = canvas.width / 2; const cY = canvas.height / 2; 
+        const radius = (canvas.width / 2) - 20;
+        
+        // Top Arc (Temp)
+        ctx.beginPath(); ctx.arc(cX, cY, radius, -1.15*Math.PI, 0.15*Math.PI); ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke();
+        const tStartRad = -1.15 * Math.PI; const tEndRad = tStartRad + (1.3 * Math.PI * ((tVal - 350)/(550 - 350)));
+        ctx.beginPath(); ctx.arc(cX, cY, radius, tStartRad, tEndRad); ctx.strokeStyle = color; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke(); 
+        ctx.beginPath(); ctx.arc(cX + radius * Math.cos(tEndRad), cY + radius * Math.sin(tEndRad), 12, 0, 2*Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+
+        // Bottom Arc (Time)
+        ctx.beginPath(); ctx.arc(cX, cY, radius, 0.65*Math.PI, 0.35*Math.PI, true); ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+        const sStartRad = 0.65 * Math.PI; const sEndRad = sStartRad - (0.3 * Math.PI * ((sVal - 30)/(120 - 30)));
+        ctx.beginPath(); ctx.arc(cX, cY, radius, sStartRad, sEndRad, true); ctx.strokeStyle = '#8e8e93'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cX + radius * Math.cos(sEndRad), cY + radius * Math.sin(sEndRad), 9, 0, 2*Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+    }
+
+    tempInput.addEventListener('input', () => { if(appState === 'IDLE') drawMasterSplitDial(); });
+    dashboardTimeInput.addEventListener('input', () => { 
+        if(appState === 'IDLE') { 
+            globalSessionDuration = parseInt(dashboardTimeInput.value); 
+            document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`; 
+            drawMasterSplitDial(); 
+        }
+    });
+
+    /* ==========================================================================
+       4. THE LIVE STATE MACHINE (TELEMETRY GRAPH PHYSICS) - HOLD TO INHALE
+       ========================================================================== */
+    const liveCanvas = document.getElementById('liveGraphCanvas');
+    const liveCtx = liveCanvas.getContext('2d');
+    const seshInput = document.getElementById('seshInput');
+    const trackFill = document.getElementById('trackFill');
+    const promptText = document.getElementById('promptText');
+    const sessionClockReadout = document.getElementById('sessionClockReadout');
+    const graphContainer = document.getElementById('liveGraphContainer');
+    const centerDrawSensor = document.getElementById('centerDrawSensor');
+
+    let appState = 'IDLE'; 
+    let liveTemp = 72;
+    let liveFlux = 0;
+    let telemetryHistory = []; 
+    let targetExtractionTemp = 450;
+    let clockRunningValue = 0;
+    let countdownInterval = null;
+
+    const MAX_GRAPH_POINTS = 150;
+    const AMBIENT_TEMP = 72;
+    const MELT_TEMP = 200;
+
+    // START INHALE (Press down)
+    function startInhale(e) {
+        if(appState === 'HOLDING') {
+            if(e && e.cancelable) e.preventDefault();
+            appState = 'EXTRACTING';
+            targetExtractionTemp = parseInt(tempInput.value);
+            sessionClockReadout.style.color = "#ff1744";
+            sessionClockReadout.classList.remove('pulse-text');
+            
+            if (!countdownInterval) {
+                clockRunningValue = globalSessionDuration;
+                countdownInterval = setInterval(() => {
+                    if (appState === 'EXTRACTING') {
+                        clockRunningValue--;
+                        sessionClockReadout.textContent = `${clockRunningValue}s LIVE`;
+                        if(clockRunningValue <= 0) finalizeSession(false);
+                    }
+                }, 1000);
+            }
+        }
+    }
+
+    // STOP INHALE (Release) - Returns to 200°F Hold
+    function stopInhale(e) {
+        if(appState === 'EXTRACTING') {
+            if(e && e.cancelable) e.preventDefault();
+            appState = 'HOLDING'; 
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            sessionClockReadout.textContent = `HOLD TO INHALE`;
+            sessionClockReadout.style.color = "#555555";
+            sessionClockReadout.classList.add('pulse-text');
+        }
+    }
+    
+    // Bind Start events
+    centerDrawSensor.addEventListener('mousedown', startInhale);
+    centerDrawSensor.addEventListener('touchstart', startInhale, {passive: false});
+    graphContainer.addEventListener('mousedown', startInhale);
+    graphContainer.addEventListener('touchstart', startInhale, {passive: false});
+
+    // Bind Stop (Release) events
+    centerDrawSensor.addEventListener('mouseup', stopInhale);
+    centerDrawSensor.addEventListener('touchend', stopInhale);
+    centerDrawSensor.addEventListener('mouseleave', stopInhale);
+    graphContainer.addEventListener('mouseup', stopInhale);
+    graphContainer.addEventListener('touchend', stopInhale);
+    graphContainer.addEventListener('mouseleave', stopInhale);
+
+    function abortSession() { finalizeSession(true); }
+
+    function finalizeSession(wasAborted) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        
+        if(!wasAborted && telemetryHistory.length > 50) {
+            let peakFlux = Math.max(...telemetryHistory.map(d => d.flux));
+            let avgFlux = Math.round(telemetryHistory.reduce((a,b)=>a+b.flux,0) / telemetryHistory.length);
+            
+            let histLog = document.getElementById('historyLogContainer');
+            let newCard = document.createElement('div');
+            newCard.className = 'telemetry-card';
+            newCard.innerHTML = `
+                <div class="card-meta"><span style="color:#00e5ff;">JUST NOW</span><span>Target: ${targetExtractionTemp}°F</span></div>
+                <div class="card-title">Custom Session Log</div>
+                <div class="history-graph-wrapper"><canvas class="history-graph-canvas"></canvas></div>
+                <div class="card-meta"><span>Peak Flux: ${Math.round(peakFlux)}W</span><span style="color:#555;">Avg: ${avgFlux}W</span></div>
+            `;
+            histLog.insertBefore(newCard, histLog.firstChild);
+            
+            let mCanv = newCard.querySelector('.history-graph-canvas');
+            mCanv.width = mCanv.offsetWidth * 2; mCanv.height = mCanv.offsetHeight * 2;
+            let mCtx = mCanv.getContext('2d');
+            renderGraphToCanvas(mCanv, mCtx, telemetryHistory, false);
+        }
+
+        appState = 'IDLE';
+        sessionClockReadout.textContent = `${globalSessionDuration}s TIME`;
+        sessionClockReadout.style.color = "#555555";
+        sessionClockReadout.classList.remove('pulse-text');
+        seshInput.value = 0;
+        trackFill.style.width = "0%";
+        promptText.textContent = "Slide to Sesh";
+        promptText.style.color = "#555555";
+        telemetryHistory = []; 
+    }
+
+    seshInput.addEventListener('input', (e) => {
+        if (appState !== 'IDLE') { e.preventDefault(); abortSession(); return; }
+        let val = parseInt(seshInput.value);
+        trackFill.style.width = `calc(${val}% + 10px)`;
+        promptText.style.opacity = (100 - val * 1.5) / 100;
+    });
+
+    seshInput.addEventListener('change', () => {
+        if(appState !== 'IDLE') { abortSession(); return; }
+        let val = parseInt(seshInput.value);
+        if (val >= 90) {
+            seshInput.value = 100; trackFill.style.width = "100%"; 
+            promptText.textContent = "TAP TO ABORT"; promptText.style.opacity = 1; promptText.style.color = "#000000";
+            telemetryHistory = []; 
+            appState = 'MELTING';
+        } else {
+            seshInput.value = 0; trackFill.style.width = "0%"; promptText.textContent = "Slide to Sesh"; promptText.style.opacity = 1; promptText.style.color = "#555555";
+        }
+    });
+
+    function systemLoop() {
+        if (appState === 'IDLE') {
+            liveTemp += (AMBIENT_TEMP - liveTemp) * 0.05; 
+            liveFlux += (0 - liveFlux) * 0.1;
+        } 
+        else if (appState === 'MELTING') {
+            liveFlux = 65 + (Math.random() * 10 - 5); 
+            liveTemp += (MELT_TEMP - liveTemp) * 0.08; 
+            if (Math.abs(liveTemp - MELT_TEMP) < 2) {
+                appState = 'HOLDING';
+                sessionClockReadout.textContent = "HOLD TO INHALE";
+                sessionClockReadout.classList.add('pulse-text');
+            }
+        } 
+        else if (appState === 'HOLDING') {
+            liveTemp += (MELT_TEMP - liveTemp) * 0.05; // Decays back down to 200F if released
+            liveFlux = 12 + (Math.random() * 4 - 2); 
+        } 
+        else if (appState === 'EXTRACTING') {
+            liveFlux = 45 + (Math.random() * 8 - 4); 
+            liveTemp += (targetExtractionTemp - liveTemp) * 0.05; 
+        }
+
+        telemetryHistory.push({ temp: liveTemp, flux: liveFlux });
+        if (telemetryHistory.length > MAX_GRAPH_POINTS && appState === 'IDLE') telemetryHistory.shift(); 
+
+        renderGraphToCanvas(liveCanvas, liveCtx, telemetryHistory, true);
+        requestAnimationFrame(systemLoop);
+    }
+
+    function renderGraphToCanvas(canv, ctx, dataArr, isLive) {
+        if(!canv.width || canv.width === 0) return;
+        ctx.clearRect(0, 0, canv.width, canv.height);
+        if(dataArr.length === 0) return;
+
+        let w = canv.width; let h = canv.height;
+        let maxDataPoints = isLive ? MAX_GRAPH_POINTS : dataArr.length;
+        let xStep = w / (maxDataPoints - 1);
+        
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, h*0.25); ctx.lineTo(w, h*0.25); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, h*0.75); ctx.lineTo(w, h*0.75); ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+        let startIdx = Math.max(0, dataArr.length - maxDataPoints);
+        for(let i=0; i<dataArr.length - startIdx; i++) {
+            let pt = dataArr[i + startIdx];
+            let x = i * xStep; let y = h - ((pt.flux / 80) * h);
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        let currentDrawColor = calculateThermalColor(dataArr[dataArr.length-1].temp);
+        ctx.strokeStyle = currentDrawColor; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.shadowBlur = 10; ctx.shadowColor = currentDrawColor;
+        for(let i=0; i<dataArr.length - startIdx; i++) {
+            let pt = dataArr[i + startIdx];
+            let x = i * xStep; let y = h - (((pt.temp - 70) / (600 - 70)) * h);
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    // Force canvas dimensions to be precise before drawing
+    setTimeout(() => {
+        drawMasterSplitDial(); 
+        systemLoop();
+    }, 100);
+
+</script>
+</body>
+</html>
