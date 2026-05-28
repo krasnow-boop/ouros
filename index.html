@@ -6,7 +6,7 @@
     <title>Ouros Master Telemetry System</title>
     <style>
         /* ==========================================================================
-           1. CORE SYSTEM THEME RESET & VIEWPORT FIXES
+           1. NATIVE CORE RESET & RESPONSIVE VIEWPORT CONSTRAINTS
            ========================================================================== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
@@ -19,24 +19,61 @@
             user-select: none;
             overflow: hidden;
             position: fixed;
+            touch-action: none;
         }
 
-        .iphone-frame { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
+        .app-container {
+            width: 100vw;
+            height: 100dvh;
+            background-color: #121212;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
 
-        .master-horizontal-scroller { display: flex; flex-grow: 1; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+        .master-horizontal-scroller {
+            display: flex;
+            flex-grow: 1;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            width: 100%;
+            height: 100%;
+        }
         .master-horizontal-scroller::-webkit-scrollbar { display: none; }
 
-        .app-surface { min-width: 100vw; width: 100vw; height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; overflow-y: auto; background-color: #121212; position: relative; }
+        .app-surface {
+            min-width: 100vw; 
+            width: 100vw;
+            height: 100%;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background-color: #121212;
+            position: relative;
+        }
         .app-surface::-webkit-scrollbar { display: none; }
 
-        .fixed-navigation-deck { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 90; pointer-events: none; }
+        .fixed-navigation-deck {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 90;
+            pointer-events: none;
+        }
         .nav-dot { width: 6px; height: 6px; border-radius: 50%; background-color: rgba(255,255,255,0.15); transition: 0.3s; }
         .nav-dot.active { background-color: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
 
         /* ==========================================================================
-           2. PREMIUM TELEMETRY STATUS HEADERS
+           2. STATUS INFRASTRUCTURE HEADERS (MINIMAL FLAT WHITE VECTORS)
            ========================================================================== */
-        .surface-header { display: flex; justify-content: space-between; align-items: center; padding: 55px 24px 15px 24px; border-bottom: 1px solid #1c1c1c; background-color: rgba(18,18,18,0.95); position: sticky; top: 0; z-index: 20; }
+        .surface-header { display: flex; justify-content: space-between; align-items: center; padding: 50px 24px 15px 24px; border-bottom: 1px solid #1c1c1c; background-color: rgba(18,18,18,0.95); position: sticky; top: 0; z-index: 20; }
         .surface-header .title { font-size: 12px; letter-spacing: 2px; font-weight: 600; color: #e5e5e5; text-transform: uppercase; }
         .left-status-group { display: flex; align-items: center; gap: 8px; width: 60px; }
         .left-status-group svg { fill: #ffffff; width: 16px; height: 16px; opacity: 0.9; }
@@ -45,11 +82,9 @@
         .right-status-group svg { fill: #ffffff; width: 22px; height: 12px; opacity: 0.9; }
         .header-action-btn { font-size: 18px; color: #555; width: 20px; text-align: center; cursor: pointer; transition: color 0.2s; }
         .header-action-btn:hover { color: #00e5ff; }
-        .section-header { font-size: 11px; letter-spacing: 1.5px; color: #555; font-weight: 700; padding: 24px 24px 10px 24px; text-transform: uppercase; }
+        .section-header { font-size: 11px; letter-spacing: 1.5px; color: #555; font-weight: 700; padding: 20px 24px 10px 24px; text-transform: uppercase; }
 
-        /* ==========================================================================
-           3. SURFACE 1: TELEMETRY ANALYSIS LOGROOM
-           ========================================================================== */
+        /* SURFACE 1 LOG DECK */
         .telemetry-card { background-color: #18181a; border: 1px solid #222; border-radius: 14px; margin: 0 24px 16px 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
         .card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #555; text-transform: uppercase; font-weight: 600; }
         .card-title { font-size: 15px; font-weight: 500; color: #fff; }
@@ -57,25 +92,25 @@
         .history-graph-canvas { width: 100%; height: 100%; }
 
         /* ==========================================================================
-           4. SURFACE 2: DASHBOARD CONSOLE (DIAL + LIVE GRAPH)
+           3. SURFACE 2: INSTRUMENT DASHBOARD ENGAGEMENT TERMINAL
            ========================================================================== */
-        .dashboard-engine { display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-grow: 1; padding: 20px 24px 80px 24px; gap: 20px; }
+        .dashboard-engine { display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-grow: 1; padding: 20px 24px 80px 24px; gap: 15px; }
         
         .dial-outer-container { position: relative; width: 230px; height: 230px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
-        .vector-ring-canvas { position: absolute; top: 0; left: 0; width: 230px; height: 230px; z-index: 1; pointer-events: none; }
+        .vector-ring-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
         
-        .center-readout-hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2; width: 150px; height: 150px; border-radius: 50%; pointer-events: auto; cursor: pointer; }
-        .display-temp-value { font-size: 46px; font-weight: 200; color: #ffffff; line-height: 1; pointer-events: none; }
-        .display-session-time { font-size: 14px; letter-spacing: 1px; color: #555; font-weight: 600; margin-top: 6px; text-transform: uppercase; transition: color 0.3s; pointer-events: none; }
+        .center-readout-hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; width: 150px; height: 150px; border-radius: 50%; pointer-events: auto; cursor: pointer; }
+        .display-temp-value { font-size: 48px; font-weight: 200; color: #ffffff; line-height: 1; pointer-events: none; }
+        .display-session-time { font-size: 14px; letter-spacing: 1px; color: #555; font-weight: 600; margin-top: 4px; text-transform: uppercase; transition: color 0.3s; pointer-events: none; }
 
-        @keyframes pulseAlert { 0% { color: #555; transform: scale(1); } 50% { color: #00e5ff; transform: scale(1.05); } 100% { color: #555; transform: scale(1); } }
+        @keyframes pulseAlert { 0% { color: #555; } 50% { color: #00e5ff; } 100% { color: #555; } }
         .pulse-text { animation: pulseAlert 1.5s infinite; font-weight: 700 !important; }
 
-        .native-temp-slider { position: absolute; top: 0; left: 0; width: 100%; height: 66%; opacity: 0; z-index: 10; cursor: pointer; }
-        .native-time-slider { position: absolute; bottom: 0; left: 0; width: 100%; height: 33%; opacity: 0; z-index: 11; cursor: pointer; }
+        .native-temp-slider { position: absolute; top: 0; left: 0; width: 100%; height: 60%; opacity: 0; z-index: 10; cursor: pointer; }
+        .native-time-slider { position: absolute; bottom: 0; left: 0; width: 100%; height: 40%; opacity: 0; z-index: 11; cursor: pointer; }
 
-        /* LIVE TELEMETRY GRAPH GRID (Sleek Horizontal Config) */
-        .live-graph-container { width: 100%; flex-grow: 1; min-height: 80px; height: 80px; background-color: #151517; border: 1px solid #2c2c2e; border-radius: 12px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; z-index: 15; }
+        /* WIDE SLEEK TELEMETRY MATRIX BLOCK */
+        .live-graph-container { width: 100%; height: 80px; min-height: 80px; background-color: #151517; border: 1px solid #2c2c2e; border-radius: 12px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); z-index: 15; cursor: pointer; }
         .live-graph-canvas { width: 100%; height: 100%; z-index: 2; position: absolute; top: 0; left: 0; pointer-events: none; }
         
         .graph-label { position: absolute; font-size: 9px; font-weight: 700; color: #444; z-index: 3; pointer-events: none; }
@@ -84,8 +119,8 @@
         .label-flux-high { top: 6px; right: 8px; color: #666; }
         .label-flux-low { bottom: 6px; right: 8px; color: #666; }
 
-        /* Sesh Slider */
-        .activation-deck { width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        /* Slide Firing Mechanics Channel */
+        .activation-deck { width: 100%; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 10px; }
         .sesh-slider-track { position: relative; width: 100%; height: 56px; background-color: #1c1c1e; border-radius: 28px; border: 1px solid #2c2c2e; display: flex; align-items: center; overflow: hidden; }
         .sesh-track-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, rgba(0,229,255,0.2), var(--current-glow, #00e5ff)); z-index: 1; pointer-events: none; transition: width 0.05s linear;}
         .slider-instruction-prompt { position: absolute; width: 100%; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #555; text-transform: uppercase; z-index: 2; pointer-events: none; }
@@ -93,14 +128,13 @@
         .native-sesh-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 52px; height: 52px; border-radius: 26px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
 
         /* ==========================================================================
-           5. SURFACE 3 & MODALS
+           4. SURFACE 3: VAULT & SWIPE ARCHITECTURE
            ========================================================================== */
         .swipe-row-wrapper { position: relative; width: 100%; height: 58px; overflow: hidden; border-bottom: 1px solid #1a1a1a; background-color: #1c1c1e; }
         .swipe-row-content { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-color: #121212; display: flex; align-items: center; padding: 0 24px; z-index: 2; transform: translateX(0); transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; }
         .swipe-row-wrapper.open .swipe-row-content { transform: translateX(-75px); }
         .action-reveal { position: absolute; right: 0; top: 0; width: 75px; height: 100%; background-color: #1c1c1e; display: flex; justify-content: center; align-items: center; z-index: 1; cursor: pointer; }
         .wrench-icon { font-size: 16px; color: #ffffff; transition: transform 0.2s; }
-        .action-reveal:active .wrench-icon { transform: scale(0.9); }
         .row-text { font-size: 14px; font-weight: 400; color: #dcdcdc; }
         .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 16px; box-shadow: 0 0 10px currentColor; flex-shrink: 0; }
         .dot.blue { color: #00e5ff; background-color: #00e5ff; }
@@ -109,6 +143,9 @@
         .dot.white { color: #ffffff; background-color: #ffffff; }
         .bullet { font-size: 14px; color: #3a3a3c; margin-right: 18px; padding-left: 2px; }
 
+        /* ==========================================================================
+           5. FORM PANEL CONFIGURATION ENGINE MODALS
+           ========================================================================== */
         .sliding-panel-overlay { position: absolute; left: 0; top: 100%; width: 100%; height: 100%; background-color: #121212; z-index: 500; display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); padding-bottom: 40px; }
         .sliding-panel-overlay.active { transform: translateY(-100%); }
         .panel-scroller { flex-grow: 1; overflow-y: auto; padding: 24px; }
@@ -127,13 +164,13 @@
         .action-button-deck { padding: 0 24px; display: flex; flex-direction: column; gap: 12px; }
         .primary-save-btn { width: 100%; background-color: #ffffff; color: #000000; border: none; border-radius: 12px; padding: 16px; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
         .secondary-delete-btn { width: 100%; background: transparent; color: #ff1744; border: none; padding: 10px; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-        
+
         .settings-placeholder-row { display: flex; justify-content: space-between; align-items: center; background-color: #1c1c1e; border: 1px solid #2c2c2e; padding: 18px 20px; border-radius: 12px; margin-bottom: 14px; font-size: 15px; font-weight: 500; color: #e5e5e5; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="iphone-frame">
+<div class="app-container">
     <div class="fixed-navigation-deck">
         <div class="nav-dot"></div>
         <div class="nav-dot active"></div> 
@@ -142,9 +179,6 @@
 
     <div class="master-horizontal-scroller" id="masterScroller">
         
-        <!-- ==========================================
-             SURFACE 1: TELEMETRY LOGS 
-             ========================================== -->
         <div class="app-surface">
             <div class="surface-header">
                 <div class="left-status-group">
@@ -158,21 +192,17 @@
                 </div>
             </div>
             <div class="section-header">Historical Sessions</div>
-            
             <div id="historyLogContainer">
-                <!-- Static Fallback Examples -->
                 <div class="telemetry-card">
                     <div class="card-meta"><span>May 27, 9:14 PM</span><span>Target: 400°F</span></div>
-                    <div class="card-title">Flavor Chaser</div>
-                    <div class="history-graph-wrapper"><div class="mock-flatline-tfr" style="top:30px; background: linear-gradient(90deg, #00e5ff, #ff9100);"></div></div>
+                    <div class="card-title">Flavor Chaser Baseline</div>
+                    <div class="history-graph-wrapper"><div class="mock-flatline-tfr" style="top:30px; background: linear-gradient(90deg, #00e5ff, #ff9100);">
+                    </div></div>
                     <div class="card-meta"><span>Peak Flux: 45W</span><span style="color:#555;">Duration: 60s</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- ==========================================
-             SURFACE 2: ACTIVE DASHBOARD (LIVE GRAPH)
-             ========================================== -->
         <div class="app-surface" id="dashboardSurface">
             <div class="surface-header">
                 <div class="left-status-group">
@@ -198,7 +228,6 @@
                     </div>
                 </div>
 
-                <!-- LIVE TELEMETRY GRAPH - Hold to Inhale Target -->
                 <div class="live-graph-container" id="liveGraphContainer">
                     <div class="graph-label label-temp-high">600°F</div>
                     <div class="graph-label label-temp-low">70°F</div>
@@ -207,7 +236,6 @@
                     <canvas class="live-graph-canvas" id="liveGraphCanvas" width="800" height="160"></canvas>
                 </div>
 
-                <!-- Activation Deck -->
                 <div class="activation-deck">
                     <div class="sesh-slider-track">
                         <div class="slider-instruction-prompt" id="promptText">Slide to Sesh</div>
@@ -218,27 +246,19 @@
             </div>
         </div>
 
-        <!-- ==========================================
-             SURFACE 3: PROFILE VAULT ARCHIVE
-             ========================================== -->
         <div class="app-surface">
             <div class="surface-header">
                 <div class="header-action-btn" onclick="openAddProfile()" style="color:#00e5ff; font-weight:700;">＋</div>
                 <div class="title">Profile Vault</div>
                 <div class="header-action-btn" onclick="toggleOverlayPanel('settingsSuite', true)">⚙️</div>
             </div>
-
             <div class="section-header">On-Device Presets</div>
             <div id="devicePresetsList"></div>
-
             <div class="section-header">My Vault Library</div>
             <div id="vaultLibraryList"></div>
         </div>
     </div>
 
-    <!-- ==========================================================================
-         PANEL OVERLAYS (CREATION SUITE & SETTINGS)
-         ========================================================================== -->
     <div class="sliding-panel-overlay" id="configSuite">
         <div class="surface-header">
             <div class="header-action-btn" onclick="toggleOverlayPanel('configSuite', false)" style="font-size:14px; color:#666;">Cancel</div>
@@ -258,10 +278,8 @@
                 <div class="slider-readout-wrapper"><label>Session Window Duration</label><div class="param-value-output" id="valTime" style="color:#ffffff;">45s</div></div>
                 <input type="range" min="30" max="120" value="45" step="5" class="form-range-input" id="slideFormTime">
             </div>
-            
-            <!-- Restored LED Settings -->
             <div class="form-block">
-                <label>LED Base Identification Color</label>
+                <label>LED Identification Tint</label>
                 <select class="custom-dropdown-select">
                     <option>Ion Cyan Accent</option>
                     <option>Deep Amethyst Orchid</option>
@@ -271,7 +289,7 @@
                 </select>
             </div>
             <div class="form-block">
-                <label>LED Core Animation Sequence</label>
+                <label>LED Pulse Frequency Profile</label>
                 <select class="custom-dropdown-select">
                     <option>Solid Continuous Burn</option>
                     <option>Slow Breathing Thermal Wave</option>
@@ -279,18 +297,15 @@
                     <option>Haptic Pulse Telemetry</option>
                 </select>
             </div>
-            
-            <!-- New Temperature Curve Setting -->
             <div class="form-block">
-                <label>Temperature Curve</label>
+                <label>Temperature Curve Architecture</label>
                 <select class="custom-dropdown-select" id="tempCurveSelect">
-                    <option value="steady">Steady</option>
-                    <option value="crescendo">Crescendo</option>
+                    <option value="steady">Steady Linear Delivery</option>
+                    <option value="crescendo">Crescendo Micro-Ramp Step</option>
                 </select>
             </div>
-
             <div class="form-block">
-                <label>Direct Sync to Device Memory Position</label>
+                <label>Hardware Target Base Slot Sync</label>
                 <select class="custom-dropdown-select" id="hardwareSlotSelect" style="border-color:#333; color:#888;">
                     <option value="unassigned">Unassigned (Store in Vault Only)</option>
                     <option value="blue">🔵 Blue On-Device Memory Slot</option>
@@ -314,11 +329,11 @@
         </div>
         <div class="panel-scroller" style="padding-top: 15px;">
             <div class="section-header" style="padding: 10px 0 12px 0;">Connectivity</div>
-            <div class="settings-placeholder-row"><span>Wi-Fi Configuration</span><span style="color:#555;">➔</span></div>
-            <div class="settings-placeholder-row"><span>Bluetooth Connection</span><span style="color:#555;">➔</span></div>
+            <div class="settings-placeholder-row"><span>Wi-Fi Configuration</span><span>➔</span></div>
+            <div class="settings-placeholder-row"><span>Bluetooth Connection</span><span>➔</span></div>
             <div class="section-header" style="padding: 20px 0 12px 0;">Hardware</div>
-            <div class="settings-placeholder-row"><span>Device Calibration</span><span style="color:#555;">➔</span></div>
-            <div class="settings-placeholder-row"><span>Firmware Update</span><span style="color:#555;">➔</span></div>
+            <div class="settings-placeholder-row"><span>Device Calibration</span><span>➔</span></div>
+            <div class="settings-placeholder-row"><span>Firmware Update</span><span>➔</span></div>
         </div>
         <div class="action-button-deck" style="padding: 0 24px 10px 24px;">
             <button class="primary-save-btn" style="background-color: #1c1c1e; color: #ffffff; border: 1px solid #2c2c2e; box-shadow: none;" onclick="toggleOverlayPanel('settingsSuite', false)">Back</button>
@@ -328,36 +343,29 @@
 
 <script>
     /* ==========================================================================
-       1. GLOBAL STATE & VIEWPORT ALIGNMENT
+       1. GLOBAL ARCHITECTURE COORDINATOR
        ========================================================================== */
     const scroller = document.getElementById('masterScroller');
     const dots = document.querySelectorAll('.nav-dot');
     let currentlyEditingRow = null; 
 
-    // iOS Safari Fix: Explicitly scroll to the center dashboard element on load
-    window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            scroller.scrollLeft = window.innerWidth;
-        }, 100);
-    });
+    window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { scroller.scrollLeft = window.innerWidth; }, 100); });
 
     scroller.addEventListener('scroll', () => {
-        const xPos = scroller.scrollLeft;
-        const w = window.innerWidth;
+        const xPos = scroller.scrollLeft; const w = window.innerWidth;
         dots.forEach(d => d.classList.remove('active'));
         if (xPos < w * 0.5) dots[0].classList.add('active');
         else if (xPos >= w * 0.5 && xPos < w * 1.5) dots[1].classList.add('active');
         else dots[2].classList.add('active');
     });
 
+    // Helper toggle parameters
     function toggleOverlayPanel(panelId, openState) {
-        const targetPanel = document.getElementById(panelId);
-        if(openState) targetPanel.classList.add('active');
-        else targetPanel.classList.remove('active');
+        document.getElementById(panelId).classList.toggle('active', openState);
     }
 
     /* ==========================================================================
-       2. VAULT CRUD ENGINE & SWIPE PHYSICS
+       2. LIST SELECTION & INTERACTION COMPILERS
        ========================================================================== */
     const initialDevicePresets = [
         { name: "Flavor Chaser", color: "blue", temp: 400, time: 60 },
@@ -380,53 +388,31 @@
         wrapper.dataset.time = data.time || 45;
         
         let indicator = isDevicePreset ? `<div class="dot ${data.color}"></div>` : `<div class="bullet">•</div>`;
-        
-        wrapper.innerHTML = `
-            <div class="swipe-row-content">
-                ${indicator}
-                <div class="row-text">${data.name}</div>
-            </div>
-            <div class="action-reveal">
-                <div class="wrench-icon">🔧</div>
-            </div>
-        `;
+        wrapper.innerHTML = `<div class="swipe-row-content">${indicator}<div class="row-text">${data.name}</div></div><div class="action-reveal"><div class="wrench-icon">🔧</div></div>`;
 
         let content = wrapper.querySelector('.swipe-row-content');
         let wrench = wrapper.querySelector('.action-reveal');
-        let startX = 0, startY = 0, isDragging = false;
+        let startX = 0, isDragging = false;
 
-        content.addEventListener('touchstart', e => {
-            startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = false;
-        }, {passive: true});
-        
-        content.addEventListener('touchmove', e => {
-            if(Math.abs(e.touches[0].clientX - startX) > 10) isDragging = true;
-        }, {passive: true});
-
+        content.addEventListener('touchstart', e => { startX = e.touches[0].clientX; isDragging = false; }, {passive: true});
+        content.addEventListener('touchmove', e => { if(Math.abs(e.touches[0].clientX - startX) > 10) isDragging = true; }, {passive: true});
         content.addEventListener('touchend', e => {
             let endX = e.changedTouches[0].clientX;
-            if (!isDragging && Math.abs(startX - endX) < 10) {
-                loadProfileToDashboard(wrapper);
-            } else if (startX - endX > 40) {
-                closeAllRows(); wrapper.classList.add('open');
-            } else if (endX - startX > 40) {
-                wrapper.classList.remove('open');
-            }
+            if (!isDragging && Math.abs(startX - endX) < 10) loadProfileToDashboard(wrapper);
+            else if (startX - endX > 40) { closeAllRows(); wrapper.classList.add('open'); }
+            else if (endX - startX > 40) wrapper.classList.remove('open');
         });
 
-        // Desktop mouse support
-        let mStartX = 0;
-        content.addEventListener('mousedown', e => { mStartX = e.clientX; isDragging = false; });
-        content.addEventListener('mousemove', e => { if(Math.abs(e.clientX - mStartX) > 5) isDragging = true; });
+        content.addEventListener('mousedown', e => { startX = e.clientX; isDragging = false; });
+        content.addEventListener('mousemove', e => { if(Math.abs(e.clientX - startX) > 5) isDragging = true; });
         content.addEventListener('mouseup', e => {
-            let mEndX = e.clientX;
-            if(!isDragging && Math.abs(mStartX - mEndX) < 5) loadProfileToDashboard(wrapper);
-            else if(mStartX - mEndX > 40) { closeAllRows(); wrapper.classList.add('open'); }
-            else if(mEndX - mStartX > 40) wrapper.classList.remove('open');
+            let endX = e.clientX;
+            if(!isDragging && Math.abs(startX - endX) < 5) loadProfileToDashboard(wrapper);
+            else if(startX - endX > 40) { closeAllRows(); wrapper.classList.add('open'); }
+            else if(endX - startX > 40) wrapper.classList.remove('open');
         });
 
         wrench.addEventListener('click', (e) => { e.stopPropagation(); openEditProfile(wrapper); });
-        
         return wrapper;
     }
 
@@ -438,22 +424,16 @@
     }
     initLists();
 
-    function closeAllRows() {
-        document.querySelectorAll('.swipe-row-wrapper').forEach(r => r.classList.remove('open'));
-    }
+    function closeAllRows() { document.querySelectorAll('.swipe-row-wrapper').forEach(r => r.classList.remove('open')); }
 
     function loadProfileToDashboard(row) {
-        if(appState !== 'IDLE') return; // Don't load if firing
-        let t = parseInt(row.dataset.temp);
-        let time = parseInt(row.dataset.time);
-        
+        if(appState !== 'IDLE') return;
+        let t = parseInt(row.dataset.temp); let time = parseInt(row.dataset.time);
         document.getElementById('tempInput').value = t;
         document.getElementById('dashboardTimeInput').value = time;
         globalSessionDuration = time;
-        
         document.getElementById('sessionClockReadout').textContent = `${time}s TIME`;
         drawMasterSplitDial();
-        
         scroller.scrollLeft = window.innerWidth;
     }
 
@@ -463,11 +443,9 @@
         document.getElementById('formProfileName').value = "New Custom Extract";
         document.getElementById('saveProfileBtn').innerText = "Save Profile";
         document.getElementById('hardwareSlotSelect').value = "unassigned";
-        
         let delResBtn = document.getElementById('deleteResetBtn');
         delResBtn.innerText = "Cancel";
         delResBtn.onclick = function() { toggleOverlayPanel('configSuite', false); };
-
         toggleOverlayPanel('configSuite', true);
     }
 
@@ -487,11 +465,8 @@
         let delResBtn = document.getElementById('deleteResetBtn');
 
         if (dot) {
-            let color = dot.classList.contains('blue') ? 'blue' :
-                        dot.classList.contains('orange') ? 'orange' :
-                        dot.classList.contains('red') ? 'red' : 'white';
+            let color = dot.classList.contains('blue') ? 'blue' : dot.classList.contains('orange') ? 'orange' : dot.classList.contains('red') ? 'red' : 'white';
             slotSelect.value = color;
-
             delResBtn.innerText = "Remove & Reset Slot";
             delResBtn.onclick = function() { executeSlotReset(color, currentName); };
         } else {
@@ -499,30 +474,30 @@
             delResBtn.innerText = "Delete Profile";
             delResBtn.onclick = function() { currentlyEditingRow.remove(); toggleOverlayPanel('configSuite', false); };
         }
-        
         toggleOverlayPanel('configSuite', true);
     }
 
     function executeProfileSave() {
         let newName = document.getElementById('formProfileName').value;
-        globalSessionDuration = parseInt(document.getElementById('slideFormTime').value);
         let tempVal = document.getElementById('slideFormTemp').value;
+        let timeVal = document.getElementById('slideFormTime').value;
         
-        document.getElementById('tempInput').value = tempVal;
-        document.getElementById('dashboardTimeInput').value = globalSessionDuration;
-        document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`;
-        drawMasterSplitDial();
-
         if (currentlyEditingRow) {
             currentlyEditingRow.querySelector('.row-text').innerText = newName;
             currentlyEditingRow.dataset.temp = tempVal;
-            currentlyEditingRow.dataset.time = globalSessionDuration;
+            currentlyEditingRow.dataset.time = timeVal;
             currentlyEditingRow.classList.remove('open'); 
         } else {
             let library = document.getElementById('vaultLibraryList');
-            let newRow = createRowElement({name: newName, temp: tempVal, time: globalSessionDuration}, false);
+            let newRow = createRowElement({name: newName, temp: tempVal, time: timeVal}, false);
             library.insertBefore(newRow, library.firstChild);
         }
+        
+        document.getElementById('tempInput').value = tempVal;
+        document.getElementById('dashboardTimeInput').value = timeVal;
+        globalSessionDuration = parseInt(timeVal);
+        document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`;
+        drawMasterSplitDial();
         toggleOverlayPanel('configSuite', false);
     }
 
@@ -537,58 +512,33 @@
         currentlyEditingRow.dataset.temp = defaultTemps[color];
         currentlyEditingRow.dataset.time = 45;
         currentlyEditingRow.classList.remove('open');
-
         toggleOverlayPanel('configSuite', false);
     }
 
     /* ==========================================================================
-       3. HIGH-FIDELITY CANVAS DIAL
+       3. VECTOR CANVAS DIAL ENGINE
        ========================================================================== */
     const tempInput = document.getElementById('tempInput');
     const dashboardTimeInput = document.getElementById('dashboardTimeInput');
     const canvas = document.getElementById('dialCanvas');
     const ctx = canvas.getContext('2d');
-    
-    const sfTemp = document.getElementById('slideFormTemp');
-    const sfTime = document.getElementById('slideFormTime');
-    const valTemp = document.getElementById('valTemp');
-    const valTime = document.getElementById('valTime');
-
-    function calculateThermalColor(val) {
-        const ratio = (val - 350) / (550 - 350); let r, g, b;
-        if (ratio < 0.5) { let f = ratio * 2; r = Math.round(0+(255-0)*f); g = Math.round(229+(145-229)*f); b = Math.round(255+(0-255)*f); } 
-        else { let f = (ratio - 0.5) * 2; r = 255; g = Math.round(145+(23-145)*f); b = Math.round(0+(68-0)*f); }
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-
-    sfTemp.addEventListener('input', () => {
-        valTemp.textContent = `${sfTemp.value}°F`;
-        valTemp.style.color = calculateThermalColor(parseInt(sfTemp.value));
-    });
-    sfTime.addEventListener('input', () => { valTime.textContent = `${sfTime.value}s`; });
 
     function drawMasterSplitDial() {
         if (!canvas.width || canvas.width === 0) return;
-
-        const tVal = parseInt(tempInput.value); 
-        const sVal = parseInt(dashboardTimeInput.value);
+        const tVal = parseInt(tempInput.value); const sVal = parseInt(dashboardTimeInput.value);
         const color = calculateThermalColor(tVal);
         
         document.getElementById('tempReadout').textContent = `${tVal}°F`;
         document.getElementById('tempReadout').style.color = color;
-        document.documentElement.style.setProperty('--current-glow', color);
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const cX = canvas.width / 2; const cY = canvas.height / 2; 
-        const radius = (canvas.width / 2) - 20;
+        const cX = canvas.width / 2; const cY = canvas.height / 2; const radius = (canvas.width / 2) - 20;
         
-        // Top Arc (Temp)
         ctx.beginPath(); ctx.arc(cX, cY, radius, -1.15*Math.PI, 0.15*Math.PI); ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke();
         const tStartRad = -1.15 * Math.PI; const tEndRad = tStartRad + (1.3 * Math.PI * ((tVal - 350)/(550 - 350)));
         ctx.beginPath(); ctx.arc(cX, cY, radius, tStartRad, tEndRad); ctx.strokeStyle = color; ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke(); 
         ctx.beginPath(); ctx.arc(cX + radius * Math.cos(tEndRad), cY + radius * Math.sin(tEndRad), 12, 0, 2*Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
 
-        // Bottom Arc (Time)
         ctx.beginPath(); ctx.arc(cX, cY, radius, 0.65*Math.PI, 0.35*Math.PI, true); ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
         const sStartRad = 0.65 * Math.PI; const sEndRad = sStartRad - (0.3 * Math.PI * ((sVal - 30)/(120 - 30)));
         ctx.beginPath(); ctx.arc(cX, cY, radius, sStartRad, sEndRad, true); ctx.strokeStyle = '#8e8e93'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
@@ -596,16 +546,10 @@
     }
 
     tempInput.addEventListener('input', () => { if(appState === 'IDLE') drawMasterSplitDial(); });
-    dashboardTimeInput.addEventListener('input', () => { 
-        if(appState === 'IDLE') { 
-            globalSessionDuration = parseInt(dashboardTimeInput.value); 
-            document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`; 
-            drawMasterSplitDial(); 
-        }
-    });
+    dashboardTimeInput.addEventListener('input', () => { if(appState === 'IDLE') { globalSessionDuration = parseInt(dashboardTimeInput.value); document.getElementById('sessionClockReadout').textContent = `${globalSessionDuration}s TIME`; drawMasterSplitDial(); }});
 
     /* ==========================================================================
-       4. THE LIVE STATE MACHINE (TELEMETRY GRAPH PHYSICS) - HOLD TO INHALE
+       4. STATE ENGINE PHYSICS & MONITORS (HOLD TO DRAW)
        ========================================================================== */
     const liveCanvas = document.getElementById('liveGraphCanvas');
     const liveCtx = liveCanvas.getContext('2d');
@@ -616,29 +560,19 @@
     const graphContainer = document.getElementById('liveGraphContainer');
     const centerDrawSensor = document.getElementById('centerDrawSensor');
 
-    let appState = 'IDLE'; 
-    let liveTemp = 72;
-    let liveFlux = 0;
-    let telemetryHistory = []; 
-    let targetExtractionTemp = 450;
-    let clockRunningValue = 0;
-    let countdownInterval = null;
+    let appState = 'IDLE'; let liveTemp = 72; let liveFlux = 0; let telemetryHistory = []; 
+    let targetExtractionTemp = 450; let clockRunningValue = 0; let countdownInterval = null;
 
-    const MAX_GRAPH_POINTS = 150;
-    const AMBIENT_TEMP = 72;
-    const MELT_TEMP = 200;
+    const MAX_GRAPH_POINTS = 150; const AMBIENT_TEMP = 72; const MELT_TEMP = 200;
 
-    // START INHALE (Press down)
-    function startInhale(e) {
-        if(appState === 'HOLDING') {
+    function engageInhalation(e) {
+        if (appState === 'HOLDING' || appState === 'PAUSED_EXTRACTING') {
             if(e && e.cancelable) e.preventDefault();
             appState = 'EXTRACTING';
             targetExtractionTemp = parseInt(tempInput.value);
             sessionClockReadout.style.color = "#ff1744";
-            sessionClockReadout.classList.remove('pulse-text');
             
             if (!countdownInterval) {
-                clockRunningValue = globalSessionDuration;
                 countdownInterval = setInterval(() => {
                     if (appState === 'EXTRACTING') {
                         clockRunningValue--;
@@ -650,40 +584,30 @@
         }
     }
 
-    // STOP INHALE (Release) - Returns to 200°F Hold
-    function stopInhale(e) {
-        if(appState === 'EXTRACTING') {
+    function disengageInhalation(e) {
+        if (appState === 'EXTRACTING') {
             if(e && e.cancelable) e.preventDefault();
-            appState = 'HOLDING'; 
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-            sessionClockReadout.textContent = `HOLD TO INHALE`;
-            sessionClockReadout.style.color = "#555555";
-            sessionClockReadout.classList.add('pulse-text');
+            appState = 'PAUSED_EXTRACTING';
+            sessionClockReadout.textContent = "HOLD TO DRAW";
+            sessionClockReadout.style.color = "#00e5ff";
         }
     }
-    
-    // Bind Start events
-    centerDrawSensor.addEventListener('mousedown', startInhale);
-    centerDrawSensor.addEventListener('touchstart', startInhale, {passive: false});
-    graphContainer.addEventListener('mousedown', startInhale);
-    graphContainer.addEventListener('touchstart', startInhale, {passive: false});
 
-    // Bind Stop (Release) events
-    centerDrawSensor.addEventListener('mouseup', stopInhale);
-    centerDrawSensor.addEventListener('touchend', stopInhale);
-    centerDrawSensor.addEventListener('mouseleave', stopInhale);
-    graphContainer.addEventListener('mouseup', stopInhale);
-    graphContainer.addEventListener('touchend', stopInhale);
-    graphContainer.addEventListener('mouseleave', stopInhale);
+    // Event link attachments to both structural touch receptors
+    [centerDrawSensor, graphContainer].forEach(target => {
+        target.addEventListener('mousedown', engageInhalation);
+        target.addEventListener('touchstart', engageInhalation, {passive: false});
+        target.addEventListener('mouseup', disengageInhalation);
+        target.addEventListener('touchend', disengageInhalation);
+        target.addEventListener('mouseleave', disengageInhalation);
+    });
 
     function abortSession() { finalizeSession(true); }
 
     function finalizeSession(wasAborted) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
+        clearInterval(countdownInterval); countdownInterval = null;
         
-        if(!wasAborted && telemetryHistory.length > 50) {
+        if(!wasAborted && telemetryHistory.length > 30) {
             let peakFlux = Math.max(...telemetryHistory.map(d => d.flux));
             let avgFlux = Math.round(telemetryHistory.reduce((a,b)=>a+b.flux,0) / telemetryHistory.length);
             
@@ -692,27 +616,23 @@
             newCard.className = 'telemetry-card';
             newCard.innerHTML = `
                 <div class="card-meta"><span style="color:#00e5ff;">JUST NOW</span><span>Target: ${targetExtractionTemp}°F</span></div>
-                <div class="card-title">Custom Session Log</div>
+                <div class="card-title">Completed Session Run</div>
                 <div class="history-graph-wrapper"><canvas class="history-graph-canvas"></canvas></div>
-                <div class="card-meta"><span>Peak Flux: ${Math.round(peakFlux)}W</span><span style="color:#555;">Avg: ${avgFlux}W</span></div>
+                <div class="card-meta"><span>Peak: ${Math.round(peakFlux)}W</span><span style="color:#555;">Avg: ${avgFlux}W</span></div>
             `;
             histLog.insertBefore(newCard, histLog.firstChild);
             
             let mCanv = newCard.querySelector('.history-graph-canvas');
             mCanv.width = mCanv.offsetWidth * 2; mCanv.height = mCanv.offsetHeight * 2;
-            let mCtx = mCanv.getContext('2d');
-            renderGraphToCanvas(mCanv, mCtx, telemetryHistory, false);
+            renderGraphToCanvas(mCanv, mCanv.getContext('2d'), telemetryHistory, false);
         }
 
         appState = 'IDLE';
         sessionClockReadout.textContent = `${globalSessionDuration}s TIME`;
         sessionClockReadout.style.color = "#555555";
-        sessionClockReadout.classList.remove('pulse-text');
-        seshInput.value = 0;
-        trackFill.style.width = "0%";
-        promptText.textContent = "Slide to Sesh";
-        promptText.style.color = "#555555";
-        telemetryHistory = []; 
+        seshInput.value = 0; trackFill.style.width = "0%";
+        promptText.textContent = "Slide to Sesh"; promptText.style.color = "#555555";
+        telemetryHistory = [];
     }
 
     seshInput.addEventListener('input', (e) => {
@@ -723,13 +643,12 @@
     });
 
     seshInput.addEventListener('change', () => {
-        if(appState !== 'IDLE') { abortSession(); return; }
+        if(appState !== 'IDLE') return;
         let val = parseInt(seshInput.value);
         if (val >= 90) {
             seshInput.value = 100; trackFill.style.width = "100%"; 
             promptText.textContent = "TAP TO ABORT"; promptText.style.opacity = 1; promptText.style.color = "#000000";
-            telemetryHistory = []; 
-            appState = 'MELTING';
+            telemetryHistory = []; clockRunningValue = globalSessionDuration; appState = 'MELTING';
         } else {
             seshInput.value = 0; trackFill.style.width = "0%"; promptText.textContent = "Slide to Sesh"; promptText.style.opacity = 1; promptText.style.color = "#555555";
         }
@@ -737,29 +656,20 @@
 
     function systemLoop() {
         if (appState === 'IDLE') {
-            liveTemp += (AMBIENT_TEMP - liveTemp) * 0.05; 
-            liveFlux += (0 - liveFlux) * 0.1;
-        } 
-        else if (appState === 'MELTING') {
-            liveFlux = 65 + (Math.random() * 10 - 5); 
-            liveTemp += (MELT_TEMP - liveTemp) * 0.08; 
-            if (Math.abs(liveTemp - MELT_TEMP) < 2) {
-                appState = 'HOLDING';
-                sessionClockReadout.textContent = "HOLD TO INHALE";
-                sessionClockReadout.classList.add('pulse-text');
-            }
-        } 
-        else if (appState === 'HOLDING') {
-            liveTemp += (MELT_TEMP - liveTemp) * 0.05; // Decays back down to 200F if released
-            liveFlux = 12 + (Math.random() * 4 - 2); 
-        } 
-        else if (appState === 'EXTRACTING') {
-            liveFlux = 45 + (Math.random() * 8 - 4); 
-            liveTemp += (targetExtractionTemp - liveTemp) * 0.05; 
+            liveTemp += (AMBIENT_TEMP - liveTemp) * 0.05; liveFlux += (0 - liveFlux) * 0.1;
+        } else if (appState === 'MELTING') {
+            liveFlux = 70 + (Math.random() * 8); liveTemp += (MELT_TEMP - liveTemp) * 0.08;
+            if (Math.abs(liveTemp - MELT_TEMP) < 2) { appState = 'HOLDING'; sessionClockReadout.textContent = "HOLD TO DRAW"; sessionClockReadout.style.color = "#00e5ff"; }
+        } else if (appState === 'HOLDING') {
+            liveTemp += (MELT_TEMP - liveTemp) * 0.1; liveFlux = 10 + (Math.random() * 3);
+        } else if (appState === 'EXTRACTING') {
+            liveFlux = 48 + (Math.random() * 6); liveTemp += (targetExtractionTemp - liveTemp) * 0.05;
+        } else if (appState === 'PAUSED_EXTRACTING') {
+            liveTemp += (MELT_TEMP - liveTemp) * 0.03; liveFlux = 8 + (Math.random() * 2); // Drops thermal output smoothly back down toward baseline 
         }
 
         telemetryHistory.push({ temp: liveTemp, flux: liveFlux });
-        if (telemetryHistory.length > MAX_GRAPH_POINTS && appState === 'IDLE') telemetryHistory.shift(); 
+        if (telemetryHistory.length > MAX_GRAPH_POINTS && appState === 'IDLE') telemetryHistory.shift();
 
         renderGraphToCanvas(liveCanvas, liveCtx, telemetryHistory, true);
         requestAnimationFrame(systemLoop);
@@ -769,45 +679,33 @@
         if(!canv.width || canv.width === 0) return;
         ctx.clearRect(0, 0, canv.width, canv.height);
         if(dataArr.length === 0) return;
-
         let w = canv.width; let h = canv.height;
-        let maxDataPoints = isLive ? MAX_GRAPH_POINTS : dataArr.length;
-        let xStep = w / (maxDataPoints - 1);
+        let maxPoints = isLive ? MAX_GRAPH_POINTS : dataArr.length;
+        let xStep = w / (maxPoints - 1);
+        let startIdx = Math.max(0, dataArr.length - maxPoints);
         
         ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, h*0.25); ctx.lineTo(w, h*0.25); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, h*0.75); ctx.lineTo(w, h*0.75); ctx.stroke();
 
-        ctx.beginPath();
-        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-        let startIdx = Math.max(0, dataArr.length - maxDataPoints);
+        // Flux (White)
+        ctx.beginPath(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
         for(let i=0; i<dataArr.length - startIdx; i++) {
-            let pt = dataArr[i + startIdx];
-            let x = i * xStep; let y = h - ((pt.flux / 80) * h);
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            let y = h - ((dataArr[i + startIdx].flux / 80) * h);
+            if(i===0) ctx.moveTo(i*xStep, y); else ctx.lineTo(i*xStep, y);
         }
         ctx.stroke();
 
-        ctx.beginPath();
-        let currentDrawColor = calculateThermalColor(dataArr[dataArr.length-1].temp);
-        ctx.strokeStyle = currentDrawColor; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.shadowBlur = 10; ctx.shadowColor = currentDrawColor;
+        // Temp (Color Shift)
+        ctx.beginPath(); let drawColor = calculateThermalColor(dataArr[dataArr.length-1].temp);
+        ctx.strokeStyle = drawColor; ctx.lineWidth = 3.5; ctx.shadowBlur = isLive ? 8 : 0; ctx.shadowColor = drawColor;
         for(let i=0; i<dataArr.length - startIdx; i++) {
-            let pt = dataArr[i + startIdx];
-            let x = i * xStep; let y = h - (((pt.temp - 70) / (600 - 70)) * h);
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            let y = h - (((dataArr[i + startIdx].temp - 70) / (600 - 70)) * h);
+            if(i===0) ctx.moveTo(i*xStep, y); else ctx.lineTo(i*xStep, y);
         }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.stroke(); ctx.shadowBlur = 0;
     }
 
-    // Force canvas dimensions to be precise before drawing
-    setTimeout(() => {
-        drawMasterSplitDial(); 
-        systemLoop();
-    }, 100);
-
+    setTimeout(() => { drawMasterSplitDial(); systemLoop(); }, 150);
 </script>
 </body>
 </html>
