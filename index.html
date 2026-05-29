@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg0:#000000; --bg1:#000000; --card:#1c1c1f; --line:#323237;
-    --txt:#f4f4f5; --grey:#8a8a90; --cyan:#3fe0e0; --orange:#ff8c3b;
+    --bg0:#0a0a0a; --bg1:#0a0a0a; --card:#141414; --line:#202020;
+    --txt:#f0f0f0; --grey:#7a7a7e; --cyan:#3fe0e0; --orange:#ff8c3b;
     --red:#ff4646; --green:#46d97a; --amethyst:#b06cff;
     --hub:#1a1a1c;
     --sans:"Sora","Helvetica Neue",Arial,sans-serif;
@@ -30,14 +30,14 @@
   }
   .surface{
     width:100vw;height:100dvh;position:relative;flex-shrink:0;
-    display:flex;flex-direction:column;background:#000 !important;
+    display:flex;flex-direction:column;background:#0a0a0a !important;
   }
   /* ---------- Header ---------- */
   .hdr{
     position:absolute;top:0;left:0;right:0;height:54px;z-index:30;
     display:flex;align-items:center;justify-content:space-between;
     padding:0 16px;padding-top:env(safe-area-inset-top);
-    background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
+    background:rgba(10,10,10,.92);backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
   }
   .hdr .side{display:flex;align-items:center;gap:10px;min-width:74px;}
@@ -51,7 +51,8 @@
   }
   .iconbtn.add{color:var(--cyan);border-color:rgba(63,224,224,.4);font-size:20px;line-height:0;}
   /* ---------- Body scroll ---------- */
-  .body{flex:1;overflow-y:auto;overflow-x:hidden;padding:66px 16px 96px;-webkit-overflow-scrolling:touch;background:#000 !important;}
+  .body{flex:1;overflow-y:auto;overflow-x:hidden;padding:66px 16px 96px;-webkit-overflow-scrolling:touch;background:#0a0a0a !important;}
+  .bodydash{display:flex;flex-direction:column;justify-content:center;}
   .body::-webkit-scrollbar{display:none;}
   /* ---------- Telemetry cards ---------- */
   .card{
@@ -62,25 +63,24 @@
   .card .ts{font-family:var(--mono);font-size:11px;color:var(--grey);letter-spacing:0;}
   .card .pf{font-size:12px;color:var(--cyan);font-weight:600;}
   .card .nm{font-size:16px;font-weight:600;margin-bottom:8px;}
-  .card canvas{width:100%;height:70px;display:block;border-radius:8px;background:#000000;}
+  .card canvas{width:100%;height:70px;display:block;border-radius:8px;background:#141414;}
   .card .stats{display:flex;justify-content:space-between;margin-top:8px;}
   .card .stat{text-align:center;flex:1;}
   .card .stat b{display:block;font-family:var(--mono);font-size:13px;font-weight:700;}
   .card .stat span{font-family:var(--mono);font-size:9px;color:var(--grey);text-transform:uppercase;letter-spacing:.06em;}
   .empty{color:var(--grey);text-align:center;margin-top:40px;font-size:13px;}
   /* ---------- Dashboard ---------- */
-  .dash{display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:6px;}
-  .dialwrap{position:relative;width:230px;height:230px;}
+  .dash{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:10px;}
+  .dialwrap{position:relative;width:270px;height:270px;}
   .dialwrap canvas{position:absolute;inset:0;cursor:grab;touch-action:none;}
   .hub{
-    position:absolute;top:40px;left:40px;width:150px;height:150px;border-radius:50%;
-    background:radial-gradient(circle at 50% 40%,#19191c,#0a0a0c);
+    position:absolute;top:65px;left:65px;width:140px;height:140px;border-radius:50%;
+    background:radial-gradient(circle at 50% 45%,#101010 0%,#0a0a0a 70%);
     display:grid;place-items:center;text-align:center;z-index:12;
-    border:1px solid var(--line);cursor:pointer;user-select:none;
-    box-shadow:inset 0 0 24px rgba(0,0,0,.6);
+    cursor:pointer;user-select:none;
   }
-  .hub .temp{font-family:var(--mono);font-size:38px;font-weight:400;line-height:1;letter-spacing:-.03em;}
-  .hub .temp small{font-size:18px;vertical-align:top;}
+  .hub .temp{font-family:var(--mono);font-size:46px;font-weight:700;line-height:1;letter-spacing:-.04em;}
+  .hub .temp small{font-size:22px;vertical-align:top;}
   .hub .sub{font-family:var(--mono);font-size:11px;color:var(--grey);margin-top:6px;letter-spacing:.02em;}
   .hub .state{font-family:var(--mono);font-size:10px;letter-spacing:.14em;margin-top:7px;text-transform:uppercase;font-weight:700;color:var(--grey);}
   .hub.pulse .state{color:var(--cyan);animation:pulse 1.3s infinite;}
@@ -89,30 +89,53 @@
   .lblrow{font-family:var(--mono);display:flex;justify-content:space-between;width:100%;font-size:9px;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;}
   .graphwrap{position:relative;width:100%;}
   .curvetoggle{
-    display:flex;width:100%;gap:4px;padding:4px;background:var(--card);
-    border:1px solid var(--line);border-radius:12px;
+    position:relative;display:inline-flex;align-self:center;gap:0;margin-top:4px;
+    background:transparent;border:none;border-radius:999px;padding:0;
   }
+  .curvetoggle .pill{
+    position:absolute;top:0;left:0;height:100%;width:50%;border-radius:999px;
+    background:rgba(63,224,224,.12);box-shadow:0 0 0 1px rgba(63,224,224,.35) inset;
+    transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:0;
+  }
+  .curvetoggle.cres .pill{transform:translateX(100%);}
   .curvetoggle .seg{
-    flex:1;padding:10px;border:none;border-radius:9px;background:transparent;
-    color:var(--grey);font-family:var(--mono);font-size:11px;font-weight:700;
-    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;
+    position:relative;z-index:1;min-width:96px;padding:7px 8px;border:none;background:transparent;
+    color:var(--grey);font-family:var(--mono);font-size:10px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:color .2s;
   }
-  .curvetoggle .seg.on{background:rgba(63,224,224,.14);color:var(--cyan);box-shadow:0 0 0 1px rgba(63,224,224,.3) inset;}
-  #liveGraph{width:100%;height:80px;display:block;background:#000000;border-radius:12px;border:1px solid var(--line);cursor:pointer;}
+  .curvetoggle .seg.on{color:var(--cyan);}
+  #liveGraph{width:100%;height:80px;display:block;background:#141414;border-radius:12px;border:1px solid var(--line);cursor:pointer;}
   .gylabel{font-family:var(--mono);position:absolute;font-size:8px;color:#5a5a60;pointer-events:none;}
   /* ---------- Slide to sesh ---------- */
   .slide{
-    position:relative;width:100%;height:60px;border-radius:30px;background:var(--card);
+    position:relative;width:100%;height:68px;border-radius:34px;background:var(--card);
     border:1px solid var(--line);overflow:hidden;user-select:none;margin-top:2px;
   }
-  .slide .fill{position:absolute;inset:0;width:60px;background:linear-gradient(90deg,rgba(63,224,224,.25),rgba(63,224,224,.05));}
+  .slide .fill{position:absolute;inset:0;width:68px;background:linear-gradient(90deg,rgba(63,224,224,.25),rgba(63,224,224,.05));}
   .slide .txt{font-family:var(--mono);position:absolute;inset:0;display:grid;place-items:center;font-size:12px;letter-spacing:.16em;color:var(--grey);text-transform:uppercase;pointer-events:none;}
   .slide .thumb{
-    position:absolute;top:4px;left:4px;width:52px;height:52px;border-radius:50%;
-    background:linear-gradient(135deg,var(--cyan),#1f9c9c);display:grid;place-items:center;
-    cursor:grab;color:#04201f;font-size:20px;font-weight:700;box-shadow:0 2px 12px rgba(63,224,224,.4);
+    position:absolute;top:5px;left:5px;width:58px;height:58px;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#7ff4f4,var(--cyan) 45%,#159a9a);
+    display:grid;place-items:center;z-index:3;
+    cursor:grab;color:#03201f;font-size:22px;font-weight:700;
+    box-shadow:0 4px 18px rgba(63,224,224,.45), inset 0 1px 2px rgba(255,255,255,.5);
   }
-  .slide.run .thumb{background:linear-gradient(135deg,var(--red),#9c1f1f);color:#fff;box-shadow:0 2px 12px rgba(255,70,70,.4);}
+  /* pulsing halo that invites the slide while idle */
+  .slide .thumb::before{
+    content:"";position:absolute;inset:-6px;border-radius:50%;
+    border:2px solid rgba(63,224,224,.55);animation:halo 1.8s ease-out infinite;
+  }
+  @keyframes halo{
+    0%{transform:scale(1);opacity:.7;}
+    100%{transform:scale(1.35);opacity:0;}
+  }
+  .slide.run .thumb::before{display:none;}
+  .slide .thumb .chev{display:flex;line-height:0;}
+  .slide .thumb .chev svg{margin-left:-5px;animation:nudge 1.6s ease-in-out infinite;}
+  .slide .thumb .chev svg:nth-child(2){animation-delay:.15s;opacity:.6;}
+  @keyframes nudge{0%,100%{transform:translateX(0);}50%{transform:translateX(3px);}}
+  .slide.run .thumb .chev svg{animation:none;}
+  .slide.run .thumb{background:radial-gradient(circle at 38% 32%,#ff8a8a,var(--red) 45%,#9c1f1f);color:#fff;box-shadow:0 4px 18px rgba(255,70,70,.45), inset 0 1px 2px rgba(255,255,255,.4);}
   .slide.run .fill{background:linear-gradient(90deg,rgba(255,70,70,.3),rgba(255,70,70,.05));width:100%;}
   /* ---------- Vault ---------- */
   .seclbl{font-family:var(--mono);font-size:10px;color:var(--grey);letter-spacing:.12em;text-transform:uppercase;margin:6px 4px 10px;}
@@ -138,7 +161,7 @@
   .slotbadge.white{color:#fff;border-color:#fff;}
   .prow .wrench{
     position:absolute;top:0;right:0;width:75px;height:100%;display:grid;place-items:center;
-    background:#000000;color:#fff;font-size:20px;z-index:1;cursor:pointer;
+    background:#0a0a0a;color:#fff;font-size:20px;z-index:1;cursor:pointer;
   }
   .dot.blue{background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
   .dot.orange{background:var(--orange);box-shadow:0 0 10px var(--orange);}
@@ -216,10 +239,10 @@
       <div class="title">OUROS ACTIVE</div>
       <div class="side r"><span class="batt">100%</span><span id="battIco2"></span></div>
     </div>
-    <div class="body">
+    <div class="body bodydash">
       <div class="dash">
         <div class="dialwrap">
-          <canvas id="dial" width="460" height="460" style="width:230px;height:230px;"></canvas>
+          <canvas id="dial" width="540" height="540" style="width:270px;height:270px;"></canvas>
           <div class="hub" id="hub">
             <div>
               <div class="temp" id="hubTemp">450<small>°</small></div>
@@ -230,6 +253,7 @@
         </div>
 
         <div class="curvetoggle" id="curveToggle">
+          <div class="pill" id="curvePill"></div>
           <button class="seg on" data-curve="steady">Steady</button>
           <button class="seg" data-curve="crescendo">Crescendo</button>
         </div>
@@ -239,7 +263,7 @@
           <div class="graphwrap">
             <canvas id="liveGraph" width="700" height="160"></canvas>
             <span class="gylabel" style="top:4px;left:6px;">600°F</span>
-            <span class="gylabel" style="top:50%;left:6px;transform:translateY(-50%);">445°F</span>
+            <span class="gylabel" style="top:50%;left:6px;transform:translateY(-50%);">335°F</span>
             <span class="gylabel" style="bottom:4px;left:6px;">70°F</span>
             <span class="gylabel" style="top:4px;right:6px;">80W</span>
             <span class="gylabel" style="bottom:4px;right:6px;">0W</span>
@@ -249,7 +273,7 @@
         <div class="slide" id="slide">
           <div class="fill" id="slideFill"></div>
           <div class="txt" id="slideTxt">Slide to Sesh</div>
-          <div class="thumb" id="slideThumb">›</div>
+          <div class="thumb" id="slideThumb"><span class="chev"><svg width="11" height="14" viewBox="0 0 11 14" fill="none"><path d="M2 2l6 5-6 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><svg width="11" height="14" viewBox="0 0 11 14" fill="none"><path d="M2 2l6 5-6 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
         </div>
       </div>
     </div>
@@ -352,12 +376,14 @@ goto(1);
 })();
 
 /* ============ COLOR CALC ============ */
-function tempColor(t){ // 350->550
+function tempColor(t){ // 350->550 : cyan -> orange -> red -> white
   const r=Math.max(0,Math.min(1,(t-350)/200));
-  let c1,c2,f;
-  if(r<0.5){c1=[63,224,224];c2=[255,140,59];f=r/0.5;}
-  else{c1=[255,140,59];c2=[255,70,70];f=(r-0.5)/0.5;}
-  const m=c1.map((v,i)=>Math.round(v+(c2[i]-v)*f));
+  const stops=[[63,224,224],[255,140,59],[255,70,70],[255,255,255]];
+  const seg=1/(stops.length-1);
+  let i=Math.min(stops.length-2,Math.floor(r/seg));
+  const f=(r-i*seg)/seg;
+  const c1=stops[i],c2=stops[i+1];
+  const m=c1.map((v,k)=>Math.round(v+(c2[k]-v)*f));
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 
@@ -376,25 +402,42 @@ const TARC_S=-Math.PI*1.15, TARC_E=Math.PI*0.15;
 const WARC_A=Math.PI*0.65, WARC_B=Math.PI*0.35;
 function var_cyan(){return getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim()||'#3fe0e0';}
 function drawDial(){
-  dctx.clearRect(0,0,460,460);
-  const cx=230,cy=230,rad=200;
-  dctx.lineWidth=16;dctx.lineCap='round';
-  // temp track + fill
-  dctx.strokeStyle='#242427';
+  dctx.clearRect(0,0,540,540);
+  const cx=270,cy=270,rad=210,LW=26;
+  dctx.lineWidth=LW;dctx.lineCap='round';
+  // ---- temp track ----
+  dctx.shadowBlur=0;
+  dctx.strokeStyle='#161616';
   dctx.beginPath();dctx.arc(cx,cy,rad,TARC_S,TARC_E);dctx.stroke();
+  // ---- temp fill: gradient ALONG the arc (cyan->orange->red->white) ----
   const tf=(target-350)/200, tEnd=TARC_S+(TARC_E-TARC_S)*tf;
-  dctx.strokeStyle=tempColor(target);
+  const endColor=tempColor(target);
+  const N=48; // segments
+  for(let i=0;i<N;i++){
+    const a0=TARC_S+(tEnd-TARC_S)*(i/N);
+    const a1=TARC_S+(tEnd-TARC_S)*((i+1)/N);
+    const tt=350+200*tf*((i+0.5)/N); // temp at this segment
+    dctx.strokeStyle=tempColor(tt);
+    dctx.beginPath();dctx.arc(cx,cy,rad,a0,a1+0.012);dctx.stroke();
+  }
+  // soft glow pass using the leading color
+  dctx.strokeStyle=endColor;dctx.shadowColor=endColor;dctx.shadowBlur=16;dctx.globalAlpha=.5;
   dctx.beginPath();dctx.arc(cx,cy,rad,TARC_S,tEnd);dctx.stroke();
+  dctx.globalAlpha=1;dctx.shadowBlur=0;
+  // temp handle
   dctx.fillStyle='#fff';
-  dctx.beginPath();dctx.arc(cx+rad*Math.cos(tEnd),cy+rad*Math.sin(tEnd),9,0,7);dctx.fill();
-  // time track + fill (counter-clockwise)
-  dctx.strokeStyle='#242427';
+  dctx.beginPath();dctx.arc(cx+rad*Math.cos(tEnd),cy+rad*Math.sin(tEnd),12,0,7);dctx.fill();
+  // ---- time track ----
+  dctx.strokeStyle='#161616';
   dctx.beginPath();dctx.arc(cx,cy,rad,WARC_A,WARC_B,true);dctx.stroke();
+  // time fill with glow
   const wf=(windowS-30)/90, sweep=(WARC_A-WARC_B), wAng=WARC_A-sweep*wf;
-  dctx.strokeStyle=var_cyan();
+  const wc=var_cyan();
+  dctx.strokeStyle=wc;dctx.shadowColor=wc;dctx.shadowBlur=14;
   dctx.beginPath();dctx.arc(cx,cy,rad,WARC_A,wAng,true);dctx.stroke();
+  dctx.shadowBlur=0;
   dctx.fillStyle='#fff';
-  dctx.beginPath();dctx.arc(cx+rad*Math.cos(wAng),cy+rad*Math.sin(wAng),8,0,7);dctx.fill();
+  dctx.beginPath();dctx.arc(cx+rad*Math.cos(wAng),cy+rad*Math.sin(wAng),11,0,7);dctx.fill();
 }
 function syncDial(){
   S.target=target;S.window=windowS;
@@ -409,6 +452,7 @@ const curveToggle=document.getElementById('curveToggle');
 function setCurve(mode){
   S.curve=mode;
   curveToggle.querySelectorAll('.seg').forEach(b=>b.classList.toggle('on',b.dataset.curve===mode));
+  curveToggle.classList.toggle('cres',mode==='crescendo');
 }
 curveToggle.querySelectorAll('.seg').forEach(b=>{
   b.addEventListener('click',()=>setCurve(b.dataset.curve));
@@ -460,7 +504,7 @@ const lg=document.getElementById('liveGraph'),lctx=lg.getContext('2d');
 const GW=700,GH=160,MAXP=150;
 // Temp axis curve. 1 = linear. >1 expands the hot working range and
 // compresses the cool/melt end. Try 1.5 (gentle), 2 (clear), 3 (dramatic).
-const TEMP_EXP=2;
+const TEMP_EXP=1;
 const T_MIN=70, T_MAX=600;
 function tempFrac(t){ // -> 0..1 along the y axis, with power scaling
   let f=(t-T_MIN)/(T_MAX-T_MIN);
@@ -469,7 +513,7 @@ function tempFrac(t){ // -> 0..1 along the y axis, with power scaling
 }
 function drawGraph(){
   lctx.clearRect(0,0,GW,GH);
-  lctx.strokeStyle='#242428';lctx.lineWidth=1;
+  lctx.strokeStyle='#1c1c1c';lctx.lineWidth=1;
   for(let i=1;i<4;i++){lctx.beginPath();lctx.moveTo(0,GH/4*i);lctx.lineTo(GW,GH/4*i);lctx.stroke();}
   const pts=S.hist;if(!pts.length)return;
   const stepX=GW/MAXP;
@@ -559,11 +603,14 @@ function holdEnd(){if(S.state==='EXTRACTING'){setState('PAUSED_EXTRACTING');}}
 const slide=document.getElementById('slide'),thumb=document.getElementById('slideThumb'),
   slideTxt=document.getElementById('slideTxt'),slideFill=document.getElementById('slideFill');
 let dragging=false,running=false;
+const SL_PAD=5, SL_THUMB=58;
 function thumbPos(x){
-  const r=slide.getBoundingClientRect();let p=x-r.left-30;
-  p=Math.max(4,Math.min(r.width-56,p));thumb.style.left=p+'px';
-  slideFill.style.width=(p+52)+'px';
-  return (p-4)/(r.width-60);
+  const r=slide.getBoundingClientRect();
+  const maxL=r.width-SL_THUMB-SL_PAD;
+  let p=x-r.left-SL_THUMB/2;
+  p=Math.max(SL_PAD,Math.min(maxL,p));thumb.style.left=p+'px';
+  slideFill.style.width=(p+SL_THUMB)+'px';
+  return (p-SL_PAD)/(maxL-SL_PAD);
 }
 function sStart(e){if(running){abortSession();return;}dragging=true;thumb.style.cursor='grabbing';}
 function sMove(e){if(!dragging)return;const x=e.touches?e.touches[0].clientX:e.clientX;thumbPos(x);}
@@ -575,8 +622,8 @@ window.addEventListener('mousemove',sMove);window.addEventListener('touchmove',s
 window.addEventListener('mouseup',sEnd);window.addEventListener('touchend',sEnd);
 // Tapping anywhere on the track aborts while a session is running.
 slide.addEventListener('click',()=>{if(running)abortSession();});
-function resetSlide(){const r=slide.getBoundingClientRect();thumb.style.left='4px';slideFill.style.width='60px';}
-function lockSlideRight(){const r=slide.getBoundingClientRect();thumb.style.left=(r.width-56)+'px';slideFill.style.width='100%';}
+function resetSlide(){thumb.style.left=SL_PAD+'px';slideFill.style.width=SL_THUMB+'px';}
+function lockSlideRight(){const r=slide.getBoundingClientRect();thumb.style.left=(r.width-SL_THUMB-SL_PAD)+'px';slideFill.style.width='100%';}
 
 function startSession(){
   running=true;slide.classList.add('run');slideTxt.textContent='Tap to Abort';lockSlideRight();
