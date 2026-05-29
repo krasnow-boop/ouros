@@ -71,19 +71,7 @@
   .empty{color:var(--grey);text-align:center;margin-top:40px;font-size:13px;}
   /* ---------- Dashboard ---------- */
   .dash{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:10px;}
-  .dialwrap{position:relative;width:270px;height:270px;border-radius:50%;transition:box-shadow .4s;}
-  /* live-session breathing glow around the whole dial */
-  .dialwrap.live{animation:dialBreath 2.4s ease-in-out infinite;}
-  @keyframes dialBreath{
-    0%,100%{box-shadow:0 0 0px 0px rgba(63,224,224,0);}
-    50%{box-shadow:0 0 38px 4px rgba(63,224,224,.22);}
-  }
-  /* when drawing, the breath turns warm and quickens */
-  .dialwrap.live.drawing{animation:dialBreathHot 1s ease-in-out infinite;}
-  @keyframes dialBreathHot{
-    0%,100%{box-shadow:0 0 14px 1px rgba(255,70,70,.25);}
-    50%{box-shadow:0 0 46px 7px rgba(255,70,70,.5);}
-  }
+  .dialwrap{position:relative;width:270px;height:270px;border-radius:50%;}
   .dialwrap canvas{position:absolute;inset:0;cursor:grab;touch-action:none;}
   .hub{
     position:absolute;top:65px;left:65px;width:140px;height:140px;border-radius:50%;
@@ -149,11 +137,7 @@
   .slide.run .thumb .chev svg{animation:none;}
   .slide.run .thumb{background:radial-gradient(circle at 38% 32%,#ff8a8a,var(--red) 45%,#9c1f1f);color:#fff;box-shadow:0 4px 18px rgba(255,70,70,.45), inset 0 1px 2px rgba(255,255,255,.4);}
   .slide.run .fill{background:linear-gradient(90deg,rgba(255,70,70,.3),rgba(255,70,70,.05));width:100%;}
-  .slide.run{animation:slideLive 1.6s ease-in-out infinite;border-color:rgba(255,70,70,.4);}
-  @keyframes slideLive{
-    0%,100%{box-shadow:0 0 0px 0px rgba(255,70,70,0);}
-    50%{box-shadow:0 0 26px 2px rgba(255,70,70,.35);}
-  }
+  .slide.run{border-color:rgba(255,70,70,.4);}
   /* ---------- Vault ---------- */
   .seclbl{font-family:var(--mono);font-size:10px;color:var(--grey);letter-spacing:.12em;text-transform:uppercase;margin:6px 4px 10px;}
   .prow{
@@ -393,14 +377,17 @@ goto(1);
 })();
 
 /* ============ COLOR CALC ============ */
-function tempColor(t){ // 350->550 : cyan -> orange -> red -> white
+function tempRGB(t){ // 350->550 : cyan -> orange -> red -> white, returns [r,g,b]
   const r=Math.max(0,Math.min(1,(t-350)/200));
   const stops=[[63,224,224],[255,140,59],[255,70,70],[255,255,255]];
   const seg=1/(stops.length-1);
   let i=Math.min(stops.length-2,Math.floor(r/seg));
   const f=(r-i*seg)/seg;
   const c1=stops[i],c2=stops[i+1];
-  const m=c1.map((v,k)=>Math.round(v+(c2[k]-v)*f));
+  return c1.map((v,k)=>Math.round(v+(c2[k]-v)*f));
+}
+function tempColor(t){
+  const m=tempRGB(t);
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 
@@ -593,6 +580,18 @@ function loop(now){
   // readouts
   if(S.state!=='IDLE'){hubTemp.innerHTML=`${Math.round(S.temp)}<small>°</small>`;hubTemp.style.color=tempColor(S.temp);}
   hubTime.textContent=`${Math.ceil(S.remaining)}s`;
+  // live glow: matches the live temp color, breathes; faster & stronger while drawing
+  if(running){
+    const [gr,gg,gb]=tempRGB(S.temp);
+    const drawing=S.state==='EXTRACTING';
+    const speed=drawing?2.6:1.4;            // rad/sec
+    const breath=0.5+0.5*Math.sin(now/1000*speed); // 0..1
+    const blur=(drawing?18:12)+breath*(drawing?34:26);
+    const spread=(drawing?2:1)+breath*(drawing?6:4);
+    const alpha=(drawing?0.28:0.16)+breath*(drawing?0.3:0.16);
+    dialWrap.style.boxShadow=`0 0 ${blur.toFixed(0)}px ${spread.toFixed(0)}px rgba(${gr},${gg},${gb},${alpha.toFixed(2)})`;
+    slide.style.boxShadow=`0 0 ${(blur*0.7).toFixed(0)}px ${(spread*0.5).toFixed(0)}px rgba(${gr},${gg},${gb},${(alpha*0.8).toFixed(2)})`;
+  }
   drawGraph();
   requestAnimationFrame(loop);
 }
@@ -666,6 +665,7 @@ function completeSession(aborted){
   if(S.rec.length>3)pushLog(data);
   running=false;slide.classList.remove('run');slideTxt.textContent='Slide to Sesh';resetSlide();
   dialWrap.classList.remove('live','drawing');
+  dialWrap.style.boxShadow='';slide.style.boxShadow='';
   setState('IDLE');S.temp=72;S.flux=0;S.remaining=S.window;S.hist=[];S.rec=[];
   syncDial();
 }
