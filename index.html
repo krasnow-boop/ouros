@@ -260,12 +260,18 @@
   .effopt .ename{font-size:15px;font-weight:600;}
   .effopt .esub{font-size:10px;color:var(--grey);font-family:var(--mono);letter-spacing:.04em;}
   .effopt .einfo{flex:1;}
-  .swappill{display:inline-block;margin-top:7px;padding:4px 10px;border-radius:999px;
+  .swappill{display:inline-block;padding:4px 10px;border-radius:999px;
     background:transparent;border:1px solid var(--line);color:var(--grey);
     font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;
     text-transform:uppercase;cursor:pointer;}
   .swappill.on{background:rgba(63,224,224,.14);border-color:var(--cyan);color:var(--cyan);}
   .swappill.off{opacity:.3;cursor:default;} /* inert for single-gas colors */
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;}
+  .brightpill{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;}
+  .brightpill .bseg{background:transparent;border:none;color:var(--grey);
+    font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:4px 9px;cursor:pointer;}
+  .brightpill .bseg.on{background:rgba(63,224,224,.16);color:var(--cyan);}
   .effopt.sel{background:rgba(63,224,224,.08);box-shadow:0 0 0 1px rgba(63,224,224,.3) inset;}
   .effopt .chk{margin-left:auto;color:var(--cyan);font-size:14px;opacity:0;}
   .effopt.sel .chk{opacity:1;}
@@ -602,7 +608,7 @@ const S={state:'IDLE',temp:72,flux:0,target:450,window:60,remaining:60,
   peak:0,sum:0,n:0,hist:[],rec:[],holding:false,startTs:0,
   curve:'steady', inhale:0, drawTarget:450, led:'thermal', effect:'solid', glowI:0,
   validPuffs:0, sessionDrawMs:0, drawStartMs:0,
-  swap:{comet:false,dots:false,sweep:false}};
+  swap:{comet:false,dots:false,sweep:false}, bright:'medium'};
 let target=450,windowS=60;
 
 /* ============ DIAL ============ */
@@ -669,6 +675,39 @@ function moverColor(id,swap){
   o.grad.forEach(h=>{const c=hexRGB(h);const l=c[0]+c[1]+c[2];if(l>bl){bl=l;best=c;}});
   return best;
 }
+// Effect-aware background color.
+//  - Solid: colors cycle AROUND the ring (blend: A<->B a few cycles; single/thermal: shade-loop)
+//  - Breathing: ring ~uniform but color shifts IN TIME (phase 0..1); blend swaps A<->B per breath
+//  - other effects: fall back to the standard subtle/vibrant base (bgColorAt)
+const SOLID_CYCLES=3; // how many A->B->A repeats around the ring for Solid
+function effectBgColorAt(id,t,swap,eff,phase){
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  if(eff==='solid'){
+    if(o.cat==='Blend'){
+      const A=hexRGB(swap?o.b:o.a), B=hexRGB(swap?o.a:o.b);
+      const f=0.5+0.5*Math.cos(((t*SOLID_CYCLES)%1)*Math.PI*2); // 1 at A, 0 at B
+      return mix(B,A,f);
+    }
+    if(o.thermal){const c=tempRGB(S.temp);const v=0.8+0.2*(0.5+0.5*Math.cos((t*SOLID_CYCLES%1)*Math.PI*2));return scaleRGB(c,v);}
+    if(o.cat==='Spectrum')return loopSample(o.grad.map(hexRGB),(t*SOLID_CYCLES)%1);
+    // single gas: cycle subtle shades of its own spectrum around the ring
+    return loopSample(o.grad.map(hexRGB),(t*SOLID_CYCLES)%1);
+  }
+  if(eff==='breathing'){
+    // color shifts over time (phase), ring uniform at any instant
+    if(o.cat==='Blend'){
+      const A=hexRGB(swap?o.b:o.a), B=hexRGB(swap?o.a:o.b);
+      const f=0.5+0.5*Math.cos(phase*Math.PI*2); // alternate A<->B per breath
+      return mix(B,A,f);
+    }
+    if(o.thermal)return tempRGB(S.temp);
+    if(o.cat==='Spectrum')return loopSample(o.grad.map(hexRGB),phase);
+    // single gas: drift through its own shades over the breath
+    return loopSample(o.grad.map(hexRGB),phase);
+  }
+  // moving effects + telemetry: standard base ring
+  return bgColorAt(id,t,swap);
+}
 // Legacy single-color sampler kept for the simple slide glow.
 function ledColorAt(id,t){
   const o=LED_BY_ID[id]||LED_BY_ID.thermal;
@@ -684,31 +723,35 @@ function _getBuf(S){
   if(!_bgBufs[S]){const c=document.createElement('canvas');c.width=S;c.height=S;_bgBufs[S]={c,x:c.getContext('2d')};}
   return _bgBufs[S];
 }
-function paintEffect(ctx,GCsize,rr,eff,id,swap,I,now){
+function paintEffect(ctx,GCsize,rr,eff,id,swap,I,now,bright){
   const cx=GCsize/2, cy=GCsize/2;
-  const baseA=0.12+I*0.6, spd=0.6+I*2.6;
+  const brightMul = bright==='low'?0.55 : bright==='high'?1.5 : 1.0; // medium=1
+  const baseA=(0.12+I*0.6)*brightMul, spd=0.6+I*2.6;
   const mc=moverColor(id,swap);
   const o=LED_BY_ID[id]||LED_BY_ID.thermal;
   const vibrantBg = o.thermal || o.cat==='Blend' || o.cat==='Spectrum';
   const moving = (eff==='comet'||eff==='dots'||eff==='sweep');
+  // breathing time-phase (0..1), used to alternate colors per breath
+  const breathPhase=(now/1000*spd*1.1/(Math.PI*2))%1;
   // bright additive blob (the mover)
   const blob=(bx,by,size,alpha,col)=>{
     const g=ctx.createRadialGradient(bx,by,0,bx,by,size);
-    g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${alpha})`);
+    g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${Math.min(1,alpha)})`);
     g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,size,0,7);ctx.fill();};
   // background glow band — conic-colored ring on an offscreen buffer, feathered
   // with a radial alpha mask = perfectly smooth, true color, no steps.
   const bgRing=(thick,mult)=>{
-    const a=Math.min(0.95,baseA*mult*(vibrantBg?1.4:0.55));
+    const a=Math.min(0.97,baseA*mult*(vibrantBg?1.4:0.55));
+    const col=(t)=>effectBgColorAt(id,t,swap,eff,breathPhase);
     const dpr=2, S=Math.round(GCsize*dpr);
     const buf=_getBuf(S), bx=buf.x;
     bx.setTransform(dpr,0,0,dpr,0,0);
     bx.clearRect(0,0,GCsize,GCsize);
     let cg; try{cg=bx.createConicGradient(-Math.PI/2,cx,cy);}catch(e){cg=null;}
-    if(!cg){ const N=96;for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+1)/N*Math.PI*2;const c=bgColorAt(id,i/N,swap);
+    if(!cg){ const N=96;for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+1)/N*Math.PI*2;const c=col(i/N);
         ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`;ctx.lineWidth=thick*2;ctx.beginPath();ctx.arc(cx,cy,rr,a0,a1);ctx.stroke();}return;}
-    const N=24;for(let i=0;i<=N;i++){const c=bgColorAt(id,i/N,swap);cg.addColorStop(i/N,`rgb(${c[0]},${c[1]},${c[2]})`);}
+    const N=48;for(let i=0;i<=N;i++){const c=col(i/N);cg.addColorStop(i/N,`rgb(${c[0]},${c[1]},${c[2]})`);}
     bx.fillStyle=cg;
     bx.beginPath();bx.arc(cx,cy,rr+thick*2.4,0,Math.PI*2);bx.arc(cx,cy,Math.max(0,rr-thick*2.4),0,Math.PI*2,true);bx.fill();
     bx.globalCompositeOperation='destination-in';
@@ -721,7 +764,7 @@ function paintEffect(ctx,GCsize,rr,eff,id,swap,I,now){
   const tk=rr*0.2;
   // ---- background layer (normal compositing) ----
   ctx.globalCompositeOperation='source-over';
-  if(eff==='breathing'){ const b=0.55+0.45*(0.5+0.5*Math.sin(now/1000*spd*1.1)); bgRing(tk*0.85, b*1.2); }
+  if(eff==='breathing'){ const b=0.6+0.4*(0.5+0.5*Math.sin(now/1000*spd*1.1)); bgRing(tk*0.85, b*1.15); }
   else if(eff==='telemetry'){ const rate=0.8+I*2.2, ph=(now/1000*rate)%1, blip=Math.max(0,1-ph*6); bgRing(tk*0.85, 0.55+blip*1.1); }
   else if(moving){ bgRing(tk*0.85, 0.85); }
   else { bgRing(tk*0.85, 1.0); }
@@ -749,7 +792,7 @@ function paintEffect(ctx,GCsize,rr,eff,id,swap,I,now){
 function renderGlow(now){
   gx.clearRect(0,0,GC,GC);
   if(S.glowI<=0.001)return;
-  paintEffect(gx,GC,135,S.effect,S.led,S.swap[S.effect],S.glowI,now);
+  paintEffect(gx,GC,135,S.effect,S.led,S.swap[S.effect],S.glowI,now,S.bright);
 }
 function drawDial(){
   dctx.clearRect(0,0,540,540);
@@ -815,10 +858,11 @@ function setLiveLed(id){
 }
 document.getElementById('liveLed').addEventListener('click',()=>{
   // temporary override; not saved to profile
-  openLedPicker({color:S.led,effect:S.effect,swap:S.swap},
+  openLedPicker({color:S.led,effect:S.effect,swap:S.swap,bright:S.bright},
     (id)=>setLiveLed(id),
     (eff)=>{S.effect=EFFECT_BY_ID[eff]?eff:'solid';},
-    (eff,val)=>{S.swap[eff]=val;});
+    (eff,val)=>{S.swap[eff]=val;},
+    (lv)=>{S.bright=lv;});
 });
 /* ---- pointer-angle dragging directly on the canvas ---- */
 let dialDrag=null; // 'temp' | 'time'
@@ -1139,6 +1183,7 @@ function loadProfile(p){
   setLiveLed(p.led||'thermal'); // loading a profile resets the live LED override
   S.effect=p.effect&&EFFECT_BY_ID[p.effect]?p.effect:pulseToEffect(p.pulse);
   S.swap=Object.assign({comet:false,dots:false,sweep:false},p.swap||{});
+  S.bright=p.bright||'medium';
   syncDial();
   goto(1);
 }
@@ -1192,6 +1237,7 @@ let editing=null; // {type,i} or null
 let cfgLedId='thermal'; // current LED color selection in the editor
 let cfgEffect='solid';  // current LED effect selection in the editor
 let cfgSwap={comet:false,dots:false,sweep:false}; // per-effect color swap in editor
+let cfgBright='medium'; // LED brightness in editor
 const f_ledDisc=document.getElementById('f_ledDisc'),f_ledLabel=document.getElementById('f_ledLabel');
 function renderCfgLed(){
   const o=LED_BY_ID[cfgLedId]||LED_BY_ID.thermal;
@@ -1203,7 +1249,7 @@ F.time.addEventListener('input',()=>document.getElementById('f_timeval').textCon
 function openConfig(type,i){
   closeOthers(null);
   if(type==null){editing=null;cfgTitle.textContent='New Profile';
-    F.name.value='';F.temp.value=450;F.time.value=60;cfgLedId='thermal';cfgEffect='solid';cfgSwap={comet:false,dots:false,sweep:false};F.pulse.selectedIndex=0;F.curve.selectedIndex=0;F.slot.value='';
+    F.name.value='';F.temp.value=450;F.time.value=60;cfgLedId='thermal';cfgEffect='solid';cfgSwap={comet:false,dots:false,sweep:false};cfgBright='medium';F.pulse.selectedIndex=0;F.curve.selectedIndex=0;F.slot.value='';
     cfgDel.style.display='none';}
   else{const p=(type==='preset'?presets:vault)[i];editing={type,i};
     cfgTitle.textContent='Edit Profile';
@@ -1211,6 +1257,7 @@ function openConfig(type,i){
     cfgLedId=LED_BY_ID[p.led]?p.led:'thermal';F.slot.value=p.slot||'';
     cfgEffect=pulseToEffect(p.pulse);
     cfgSwap=Object.assign({comet:false,dots:false,sweep:false},p.swap||{});
+    cfgBright=p.bright||'medium';
     F.pulse.value=p.pulse||F.pulse.options[0].value;F.curve.value=p.curve||F.curve.options[0].value;
     if(type==='preset'){F.slot.value=p.slot;cfgDel.textContent='Remove & Reset Slot';cfgDel.style.display='block';}
     else{cfgDel.textContent='Delete';cfgDel.style.display='block';}}
@@ -1223,14 +1270,15 @@ document.getElementById('addBtn').addEventListener('click',()=>openConfig(null))
 document.getElementById('cfgCancel').addEventListener('click',()=>cfgModal.classList.remove('open'));
 // open LED picker from the editor field (color + effect tabs)
 document.getElementById('f_led').addEventListener('click',()=>{
-  openLedPicker({color:cfgLedId,effect:cfgEffect,swap:cfgSwap},
+  openLedPicker({color:cfgLedId,effect:cfgEffect,swap:cfgSwap,bright:cfgBright},
     (id)=>{cfgLedId=id;renderCfgLed();},
     (eff)=>{cfgEffect=eff;},
-    (eff,val)=>{cfgSwap[eff]=val;});
+    (eff,val)=>{cfgSwap[eff]=val;},
+    (lv)=>{cfgBright=lv;});
 });
 document.getElementById('cfgSave').addEventListener('click',()=>{
   const p={name:F.name.value||'Untitled',temp:+F.temp.value,time:+F.time.value,
-    led:cfgLedId,effect:cfgEffect,swap:Object.assign({},cfgSwap),pulse:F.pulse.value,curve:F.curve.value,slot:F.slot.value};
+    led:cfgLedId,effect:cfgEffect,swap:Object.assign({},cfgSwap),bright:cfgBright,pulse:F.pulse.value,curve:F.curve.value,slot:F.slot.value};
   if(editing&&editing.type==='preset'){
     // editing an on-device preset: slot stays fixed to that row
     p.slot=presets[editing.i].slot;
@@ -1260,8 +1308,8 @@ cfgDel.addEventListener('click',()=>{
 
 /* ============ LED PICKER ============ */
 const ledModal=document.getElementById('ledModal'),ledList=document.getElementById('ledList'),effectList=document.getElementById('effectList');
-let ledColorCb=null, ledEffectCb=null, ledSwapCb=null;
-let ledCurColor='thermal', ledCurEffect='solid', ledCurSwap={comet:false,dots:false,sweep:false};
+let ledColorCb=null, ledEffectCb=null, ledSwapCb=null, ledBrightCb=null;
+let ledCurColor='thermal', ledCurEffect='solid', ledCurSwap={comet:false,dots:false,sweep:false}, ledCurBright='medium';
 let effPreviews=[]; // {ctx,eff} for animation while open
 let effRAF=null;
 const MOVING_EFFECTS=['comet','dots','sweep'];
@@ -1301,14 +1349,18 @@ function buildEffectList(){
     const swapPill=canSwap
       ? `<button class="swappill${ledCurSwap[e.id]?' on':''}${blend?'':' off'}" data-eff="${e.id}">⇄ Swap</button>`
       : '';
+    const brightPill=`<span class="brightpill">`+
+      ['low','med','high'].map(lv=>`<button class="bseg${ledCurBright===(lv==='med'?'medium':lv)?' on':''}" data-lv="${lv}">${lv==='low'?'Low':lv==='med'?'Med':'High'}</button>`).join('')+
+      `</span>`;
     row.innerHTML=`<canvas width="96" height="96"></canvas>
-      <span class="einfo"><span class="ename">${e.label}</span><br><span class="esub">${e.desc}</span>${swapPill}</span>
+      <span class="einfo"><span class="ename">${e.label}</span><br><span class="esub">${e.desc}</span>
+        <span class="pills">${swapPill}${brightPill}</span></span>
       <span class="chk">●</span>`;
     const cv=row.querySelector('canvas');const ctx=cv.getContext('2d');ctx.scale(2,2);
     effPreviews.push({ctx,eff:e.id});
-    // selecting the effect (ignore taps on the swap pill)
+    // selecting the effect (ignore taps on pills)
     row.addEventListener('click',(ev)=>{
-      if(ev.target.classList.contains('swappill'))return;
+      if(ev.target.closest('.swappill')||ev.target.closest('.brightpill'))return;
       ledCurEffect=e.id;
       effectList.querySelectorAll('.effopt').forEach(r=>r.classList.remove('sel'));
       row.classList.add('sel');
@@ -1323,6 +1375,20 @@ function buildEffectList(){
       pill.classList.toggle('on',ledCurSwap[e.id]);
       if(ledSwapCb)ledSwapCb(e.id,ledCurSwap[e.id]);
     });
+    // brightness pill (applies to the whole signature; reflected on all rows)
+    row.querySelectorAll('.bseg').forEach(b=>b.addEventListener('click',(ev)=>{
+      ev.stopPropagation();
+      const lv=b.dataset.lv==='med'?'medium':b.dataset.lv;
+      ledCurBright=lv;
+      // update every row's brightness pill to stay in sync
+      effectList.querySelectorAll('.brightpill').forEach(bp=>{
+        bp.querySelectorAll('.bseg').forEach(x=>{
+          const xv=x.dataset.lv==='med'?'medium':x.dataset.lv;
+          x.classList.toggle('on',xv===lv);
+        });
+      });
+      if(ledBrightCb)ledBrightCb(lv);
+    }));
     effectList.appendChild(row);
   });
 }
@@ -1330,14 +1396,15 @@ function animatePreviews(){
   const now=performance.now();
   effPreviews.forEach(p=>{
     p.ctx.clearRect(0,0,48,48);
-    paintEffect(p.ctx,48,18,p.eff,ledCurColor,ledCurSwap[p.eff]||false,0.85,now);
+    paintEffect(p.ctx,48,18,p.eff,ledCurColor,ledCurSwap[p.eff]||false,0.85,now,ledCurBright);
   });
   effRAF=requestAnimationFrame(animatePreviews);
 }
-function openLedPicker(state,onColor,onEffect,onSwap){
+function openLedPicker(state,onColor,onEffect,onSwap,onBright){
   ledCurColor=state.color||'thermal'; ledCurEffect=state.effect||'solid';
   ledCurSwap=Object.assign({comet:false,dots:false,sweep:false},state.swap||{});
-  ledColorCb=onColor; ledEffectCb=onEffect; ledSwapCb=onSwap;
+  ledCurBright=state.bright||'medium';
+  ledColorCb=onColor; ledEffectCb=onEffect; ledSwapCb=onSwap; ledBrightCb=onBright;
   buildLedList(); buildEffectList();
   switchLedTab('color');
   ledModal.classList.add('open');
