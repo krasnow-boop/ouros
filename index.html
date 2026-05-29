@@ -2,1621 +2,762 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>OUROS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Ouros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap');
-
-  :root {
-    --bg-base: #0a0a0a;
-    --bg-card: #141414;
-    --bg-card2: #1a1a1a;
-    --bg-elevated: #202020;
-    --text-primary: #f0f0f0;
-    --text-secondary: #888;
-    --text-muted: #444;
-    --accent-cyan: #00d4ff;
-    --accent-orange: #ff6b35;
-    --accent-red: #ff2d55;
-    --accent-white: #ffffff;
-    --border: #2a2a2a;
-    --swipe-zone-h: 72px;
-    --header-h: 56px;
+  :root{
+    --bg0:#000000; --bg1:#000000; --card:#1c1c1f; --line:#323237;
+    --txt:#f4f4f5; --grey:#8a8a90; --cyan:#3fe0e0; --orange:#ff8c3b;
+    --red:#ff4646; --green:#46d97a; --amethyst:#b06cff;
+    --hub:#1a1a1c;
+    --sans:"Sora","Helvetica Neue",Arial,sans-serif;
+    --mono:"Space Mono",ui-monospace,"SF Mono",Menlo,monospace;
   }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    width: 100vw; height: 100dvh;
-    overflow: hidden;
-    background: var(--bg-base);
-    color: var(--text-primary);
-    font-family: 'DM Mono', monospace;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none;
-    user-select: none;
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    width:100vw;height:100dvh;overflow:hidden;background:var(--bg0);
+    color:var(--txt);font-family:var(--sans);
+    overscroll-behavior:none;
   }
-
-  /* ── HEADER ── */
-  #header {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: var(--header-h);
-    background: rgba(10,10,10,0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px;
-    z-index: 100;
+  body{position:fixed;inset:0;}
+  #scroller{
+    display:flex;width:300vw;height:100dvh;
+    transition:transform .42s cubic-bezier(.22,.61,.36,1);
+    will-change:transform;
   }
-  .header-icons { display: flex; gap: 10px; align-items: center; }
-  .header-icons svg { width: 18px; height: 18px; fill: none; stroke: var(--text-secondary); stroke-width: 1.5; }
-  #page-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700; font-size: 14px;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--text-primary);
+  .surface{
+    width:100vw;height:100dvh;position:relative;flex-shrink:0;
+    display:flex;flex-direction:column;background:#000 !important;
   }
-  .battery-wrap { display: flex; align-items: center; gap: 6px; }
-  .battery-wrap span { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.05em; }
-  .battery-wrap svg { width: 22px; height: 12px; }
-
-  /* ── SURFACES CONTAINER ── */
-  #surfaces-wrap {
-    position: fixed;
-    top: var(--header-h);
-    left: 0; right: 0;
-    bottom: var(--swipe-zone-h);
-    overflow: hidden;
+  /* ---------- Header ---------- */
+  .hdr{
+    position:absolute;top:0;left:0;right:0;height:54px;z-index:30;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;padding-top:env(safe-area-inset-top);
+    background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
   }
-  #surfaces-track {
-    display: flex;
-    width: 300%;
-    height: 100%;
-    transition: transform 0.38s cubic-bezier(0.25, 0.8, 0.25, 1);
-    will-change: transform;
+  .hdr .side{display:flex;align-items:center;gap:10px;min-width:74px;}
+  .hdr .side.r{justify-content:flex-end;}
+  .hdr .title{font-size:13px;letter-spacing:.18em;font-weight:600;color:var(--txt);text-transform:uppercase;}
+  .hdr svg{display:block;}
+  .batt{font-family:var(--mono);font-size:12px;color:var(--grey);letter-spacing:.02em;}
+  .iconbtn{
+    width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:#222;border:1px solid var(--line);cursor:pointer;font-size:14px;color:var(--grey);
   }
-  .surface {
-    width: calc(100vw);
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding: 16px 16px 8px;
+  .iconbtn.add{color:var(--cyan);border-color:rgba(63,224,224,.4);font-size:20px;line-height:0;}
+  /* ---------- Body scroll ---------- */
+  .body{flex:1;overflow-y:auto;overflow-x:hidden;padding:66px 16px 96px;-webkit-overflow-scrolling:touch;background:#000 !important;}
+  .body::-webkit-scrollbar{display:none;}
+  /* ---------- Telemetry cards ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px 16px;margin-bottom:12px;
   }
-
-  /* ── SWIPE ZONE ── */
-  #swipe-zone {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: var(--swipe-zone-h);
-    background: rgba(10,10,10,0.97);
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    z-index: 100;
-    touch-action: none;
+  .card .row1{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;}
+  .card .ts{font-family:var(--mono);font-size:11px;color:var(--grey);letter-spacing:0;}
+  .card .pf{font-size:12px;color:var(--cyan);font-weight:600;}
+  .card .nm{font-size:16px;font-weight:600;margin-bottom:8px;}
+  .card canvas{width:100%;height:70px;display:block;border-radius:8px;background:#000000;}
+  .card .stats{display:flex;justify-content:space-between;margin-top:8px;}
+  .card .stat{text-align:center;flex:1;}
+  .card .stat b{display:block;font-family:var(--mono);font-size:13px;font-weight:700;}
+  .card .stat span{font-family:var(--mono);font-size:9px;color:var(--grey);text-transform:uppercase;letter-spacing:.06em;}
+  .empty{color:var(--grey);text-align:center;margin-top:40px;font-size:13px;}
+  /* ---------- Dashboard ---------- */
+  .dash{display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:6px;}
+  .dialwrap{position:relative;width:230px;height:230px;}
+  .dialwrap canvas{position:absolute;inset:0;cursor:grab;touch-action:none;}
+  .hub{
+    position:absolute;top:40px;left:40px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle at 50% 40%,#19191c,#0a0a0c);
+    display:grid;place-items:center;text-align:center;z-index:12;
+    border:1px solid var(--line);cursor:pointer;user-select:none;
+    box-shadow:inset 0 0 24px rgba(0,0,0,.6);
   }
-  .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--text-muted);
-    transition: all 0.3s ease;
+  .hub .temp{font-family:var(--mono);font-size:38px;font-weight:400;line-height:1;letter-spacing:-.03em;}
+  .hub .temp small{font-size:18px;vertical-align:top;}
+  .hub .sub{font-family:var(--mono);font-size:11px;color:var(--grey);margin-top:6px;letter-spacing:.02em;}
+  .hub .state{font-family:var(--mono);font-size:10px;letter-spacing:.14em;margin-top:7px;text-transform:uppercase;font-weight:700;color:var(--grey);}
+  .hub.pulse .state{color:var(--cyan);animation:pulse 1.3s infinite;}
+  .hub.draw .state{color:var(--red);animation:pulse .7s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .lblrow{font-family:var(--mono);display:flex;justify-content:space-between;width:100%;font-size:9px;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;}
+  .graphwrap{position:relative;width:100%;}
+  .curvetoggle{
+    display:flex;width:100%;gap:4px;padding:4px;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;
   }
-  .dot.active {
-    background: var(--text-primary);
-    width: 22px; border-radius: 3px;
+  .curvetoggle .seg{
+    flex:1;padding:10px;border:none;border-radius:9px;background:transparent;
+    color:var(--grey);font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;
   }
-
-  /* ── SURFACE 1: TELEMETRY LOGS ── */
-  .surface-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.25em; text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 16px;
+  .curvetoggle .seg.on{background:rgba(63,224,224,.14);color:var(--cyan);box-shadow:0 0 0 1px rgba(63,224,224,.3) inset;}
+  #liveGraph{width:100%;height:80px;display:block;background:#000000;border-radius:12px;border:1px solid var(--line);cursor:pointer;}
+  .gylabel{font-family:var(--mono);position:absolute;font-size:8px;color:#5a5a60;pointer-events:none;}
+  /* ---------- Slide to sesh ---------- */
+  .slide{
+    position:relative;width:100%;height:60px;border-radius:30px;background:var(--card);
+    border:1px solid var(--line);overflow:hidden;user-select:none;margin-top:2px;
   }
-  .log-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 10px;
+  .slide .fill{position:absolute;inset:0;width:60px;background:linear-gradient(90deg,rgba(63,224,224,.25),rgba(63,224,224,.05));}
+  .slide .txt{font-family:var(--mono);position:absolute;inset:0;display:grid;place-items:center;font-size:12px;letter-spacing:.16em;color:var(--grey);text-transform:uppercase;pointer-events:none;}
+  .slide .thumb{
+    position:absolute;top:4px;left:4px;width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,var(--cyan),#1f9c9c);display:grid;place-items:center;
+    cursor:grab;color:#04201f;font-size:20px;font-weight:700;box-shadow:0 2px 12px rgba(63,224,224,.4);
   }
-  .log-card-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 12px;
+  .slide.run .thumb{background:linear-gradient(135deg,var(--red),#9c1f1f);color:#fff;box-shadow:0 2px 12px rgba(255,70,70,.4);}
+  .slide.run .fill{background:linear-gradient(90deg,rgba(255,70,70,.3),rgba(255,70,70,.05));width:100%;}
+  /* ---------- Vault ---------- */
+  .seclbl{font-family:var(--mono);font-size:10px;color:var(--grey);letter-spacing:.12em;text-transform:uppercase;margin:6px 4px 10px;}
+  .prow{
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin-bottom:10px;overflow:hidden;
   }
-  .log-card-left {}
-  .log-profile-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 3px;
+  .prow .content{
+    position:relative;z-index:2;background:var(--card);padding:14px 16px;
+    display:flex;align-items:center;gap:12px;transition:transform .25s ease;cursor:pointer;
   }
-  .log-datetime {
-    font-size: 11px; color: var(--text-secondary);
-    letter-spacing: 0.03em;
+  .prow .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  .prow .pinfo{flex:1;}
+  .prow .pinfo b{font-size:15px;font-weight:600;display:block;}
+  .prow .pinfo span{font-family:var(--mono);font-size:11px;color:var(--grey);letter-spacing:-.01em;}
+  .slotbadge{
+    flex-shrink:0;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:5px 10px;border-radius:8px;border:1px solid;background:rgba(255,255,255,.03);
   }
-  .log-stats {
-    display: flex; gap: 16px;
+  .slotbadge.blue{color:var(--cyan);border-color:var(--cyan);}
+  .slotbadge.orange{color:var(--orange);border-color:var(--orange);}
+  .slotbadge.red{color:var(--red);border-color:var(--red);}
+  .slotbadge.white{color:#fff;border-color:#fff;}
+  .prow .wrench{
+    position:absolute;top:0;right:0;width:75px;height:100%;display:grid;place-items:center;
+    background:#000000;color:#fff;font-size:20px;z-index:1;cursor:pointer;
   }
-  .log-stat { text-align: right; }
-  .log-stat-val {
-    font-size: 13px; font-weight: 500;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
+  .dot.blue{background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
+  .dot.orange{background:var(--orange);box-shadow:0 0 10px var(--orange);}
+  .dot.red{background:var(--red);box-shadow:0 0 10px var(--red);}
+  .dot.white{background:#fff;box-shadow:0 0 10px #fff;}
+  .dot.green{background:var(--green);box-shadow:0 0 10px var(--green);}
+  .dot.amethyst{background:var(--amethyst);box-shadow:0 0 10px var(--amethyst);}
+  .vaultitem .content{cursor:pointer;}
+  /* ---------- Swipe zone ---------- */
+  .swipezone{
+    position:fixed;bottom:0;left:0;right:0;height:80px;z-index:40;
+    background:linear-gradient(0deg,var(--bg0) 30%,transparent);
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    touch-action:none;
   }
-  .log-stat-lbl {
-    font-size: 9px; color: var(--text-muted);
-    letter-spacing: 0.08em; text-transform: uppercase;
+  .dot-pg{width:8px;height:8px;border-radius:50%;background:#3a3a3e;transition:all .3s;}
+  .dot-pg.on{background:var(--cyan);width:22px;border-radius:4px;}
+  .swipehint{position:absolute;bottom:6px;font-size:8px;color:#3a3a3e;letter-spacing:.2em;text-transform:uppercase;}
+  /* ---------- Modals ---------- */
+  .modal{
+    position:fixed;left:0;right:0;bottom:0;height:100dvh;z-index:60;
+    background:var(--bg1);transform:translateY(100%);transition:transform .4s cubic-bezier(.22,.61,.36,1);
+    display:flex;flex-direction:column;
   }
-  .log-canvas {
-    width: 100%; height: 52px;
-    display: block;
-    border-radius: 6px;
-    background: var(--bg-base);
+  .modal.open{transform:translateY(0);}
+  .modal .mhead{
+    display:flex;align-items:center;justify-content:space-between;padding:18px 16px;
+    border-bottom:1px solid var(--line);
   }
-
-  /* ── SURFACE 2: DASHBOARD ── */
-  #dashboard { display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; }
-
-  /* Split Dial */
-  #dial-wrap {
-    position: relative;
-    width: min(300px, 82vw);
-    aspect-ratio: 1;
-    margin: 0 auto 12px;
+  .modal .mhead h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+  .modal .mbody{flex:1;overflow-y:auto;padding:18px 16px 40px;}
+  .modal .mbody::-webkit-scrollbar{display:none;}
+  .closeb{background:none;border:none;color:var(--cyan);font-size:13px;cursor:pointer;letter-spacing:.08em;}
+  .field{margin-bottom:18px;}
+  .field label{font-family:var(--mono);display:block;font-size:10px;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+  .field input[type=text],.field select{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:13px 14px;color:var(--txt);font-size:14px;font-family:inherit;
   }
-  #dial-canvas { width: 100%; height: 100%; display: block; }
-  #dial-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
+  .field select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%238a8a90' stroke-width='2'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 14px center;}
+  .field .rngval{font-family:var(--mono);float:right;font-size:13px;font-weight:700;color:var(--txt);}
+  .field input[type=range]{width:100%;margin-top:10px;accent-color:var(--cyan);}
+  .mbtns{display:flex;gap:10px;margin-top:10px;}
+  .btn{flex:1;padding:15px;border-radius:12px;border:none;font-size:13px;font-weight:600;letter-spacing:.08em;cursor:pointer;font-family:inherit;text-transform:uppercase;}
+  .btn.save{background:var(--cyan);color:#04201f;}
+  .btn.del{background:rgba(255,70,70,.12);color:var(--red);border:1px solid rgba(255,70,70,.3);}
+  .srow{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
   }
-  #dial-temp-display {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(24px, 7vw, 32px);
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  #dial-temp-unit {
-    font-size: 11px; color: var(--text-muted);
-    letter-spacing: 0.1em;
-  }
-  #dial-time-display {
-    font-family: 'DM Mono', monospace;
-    font-size: clamp(14px, 4vw, 18px);
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-variant-numeric: tabular-nums;
-  }
-  #dial-status {
-    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--text-muted); margin-top: 6px;
-    transition: color 0.4s;
-  }
-  #dial-status.pulsing {
-    animation: pulse-cyan 1.2s ease-in-out infinite;
-  }
-  @keyframes pulse-cyan {
-    0%, 100% { color: var(--accent-cyan); opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  /* Invisible range sliders overlaid on dial */
-  #slider-temp, #slider-time {
-    position: absolute;
-    opacity: 0;
-    pointer-events: all;
-    cursor: pointer;
-    width: 90%; height: 90%;
-    top: 5%; left: 5%;
-    -webkit-appearance: none;
-  }
-
-  /* Telemetry Graph */
-  #tele-graph-wrap {
-    width: min(300px, 82vw);
-    margin: 0 auto 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-  }
-  #tele-canvas {
-    width: 100%;
-    height: 80px;
-    display: block;
-  }
-  #tele-hold-overlay {
-    position: absolute; inset: 0;
-    cursor: pointer;
-    touch-action: none;
-  }
-  .tele-labels {
-    position: absolute; top: 6px; left: 8px;
-    display: flex; gap: 10px;
-  }
-  .tele-lbl {
-    font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .tele-lbl-dot {
-    width: 5px; height: 5px; border-radius: 50%;
-  }
-
-  /* Slide to Sesh */
-  #slide-wrap {
-    width: min(300px, 82vw);
-    margin: 0 auto;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    height: 50px;
-    position: relative;
-    overflow: hidden;
-  }
-  #slide-track-fill {
-    position: absolute; left: 0; top: 0; bottom: 0;
-    width: 0%;
-    background: linear-gradient(90deg, rgba(0,212,255,0.15), rgba(0,212,255,0.05));
-    transition: width 0.05s linear;
-    border-radius: 50px;
-  }
-  #slide-thumb {
-    position: absolute;
-    left: 4px; top: 4px;
-    width: 42px; height: 42px;
-    background: var(--bg-elevated);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transition: left 0.05s linear, background 0.3s;
-    z-index: 2;
-  }
-  #slide-thumb svg { width: 18px; height: 18px; stroke: var(--text-secondary); fill: none; stroke-width: 1.5; }
-  #slide-label {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--text-muted);
-    pointer-events: none; z-index: 1;
-  }
-  #abort-btn {
-    display: none;
-    margin: 10px auto 0;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-    padding: 8px 20px; border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  #abort-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
-
-  /* ── SURFACE 3: PROFILE VAULT ── */
-  .vault-section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--text-muted); margin-bottom: 10px; margin-top: 16px;
-  }
-  .vault-section-title:first-child { margin-top: 0; }
-
-  .profile-row-wrap {
-    position: relative;
-    height: 62px;
-    margin-bottom: 6px;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .profile-row-bg {
-    position: absolute; inset: 0;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex; align-items: center;
-    padding: 0 14px;
-    gap: 12px;
-  }
-  .profile-color-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .profile-info { flex: 1; }
-  .profile-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600;
-    color: var(--text-primary);
-  }
-  .profile-meta {
-    font-size: 10px; color: var(--text-secondary);
-    letter-spacing: 0.04em; margin-top: 2px;
-  }
-  .profile-slot-badge {
-    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    border-radius: 4px; padding: 2px 6px;
-  }
-  .profile-row-action {
-    position: absolute; right: 0; top: 0; bottom: 0;
-    width: 56px;
-    background: var(--bg-elevated);
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 0 10px 10px 0;
-    cursor: pointer;
-    transform: translateX(56px);
-    transition: transform 0.25s ease;
-  }
-  .profile-row-action svg { width: 18px; height: 18px; stroke: var(--text-secondary); fill: none; stroke-width: 1.5; }
-  .profile-row-front {
-    position: absolute; inset: 0;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex; align-items: center;
-    padding: 0 14px; gap: 12px;
-    cursor: pointer;
-    transition: transform 0.25s ease;
-    will-change: transform;
-  }
-
-  /* Add button */
-  #add-profile-btn {
-    width: 100%;
-    height: 50px;
-    background: transparent;
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-    margin-top: 8px;
-    transition: all 0.2s;
-  }
-  #add-profile-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-  #add-profile-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
-
-  /* ── CONFIG MODAL ── */
-  #modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  #modal-overlay.open { opacity: 1; pointer-events: all; }
-  #modal-sheet {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--bg-card);
-    border-radius: 20px 20px 0 0;
-    border-top: 1px solid var(--border);
-    padding: 20px 20px 40px;
-    z-index: 201;
-    transform: translateY(100%);
-    transition: transform 0.38s cubic-bezier(0.25, 0.8, 0.25, 1);
-    max-height: 85dvh;
-    overflow-y: auto;
-  }
-  #modal-sheet.open { transform: translateY(0); }
-  #modal-handle {
-    width: 36px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 20px;
-  }
-  #modal-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px; font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 20px;
-  }
-  .modal-field { margin-bottom: 16px; }
-  .modal-label {
-    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: var(--text-muted); margin-bottom: 6px;
-    display: block;
-  }
-  .modal-input {
-    width: 100%; background: var(--bg-base);
-    border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text-primary); font-family: 'DM Mono', monospace;
-    font-size: 14px; padding: 10px 12px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .modal-input:focus { border-color: var(--accent-cyan); }
-  .modal-row { display: flex; gap: 10px; }
-  .modal-row .modal-field { flex: 1; }
-  .modal-select {
-    width: 100%; background: var(--bg-base);
-    border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text-primary); font-family: 'DM Mono', monospace;
-    font-size: 13px; padding: 10px 12px;
-    outline: none; appearance: none;
-    cursor: pointer;
-  }
-  .modal-color-row {
-    display: flex; gap: 8px;
-  }
-  .color-swatch {
-    width: 32px; height: 32px; border-radius: 50%;
-    cursor: pointer; border: 2px solid transparent;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .color-swatch.selected { border-color: white; transform: scale(1.15); }
-  .curve-row { display: flex; gap: 8px; }
-  .curve-btn {
-    flex: 1; padding: 10px;
-    background: var(--bg-base); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text-secondary);
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 0.08em; cursor: pointer; text-align: center;
-    transition: all 0.2s;
-  }
-  .curve-btn.selected { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0,212,255,0.05); }
-  .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
-  .modal-save-btn {
-    flex: 1; padding: 14px;
-    background: var(--text-primary); color: var(--bg-base);
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    border: none; border-radius: 10px; cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .modal-save-btn:hover { opacity: 0.85; }
-  .modal-delete-btn {
-    padding: 14px 18px;
-    background: transparent; border: 1px solid var(--border);
-    color: var(--accent-red); font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-    border-radius: 10px; cursor: pointer; white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .modal-delete-btn:hover { border-color: var(--accent-red); background: rgba(255,45,85,0.06); }
-
-  /* Scrollbar */
-  .surface::-webkit-scrollbar, #modal-sheet::-webkit-scrollbar { width: 0; }
+  .srow span{font-size:14px;}
+  .srow .arr{color:var(--grey);}
+  .sgroup{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin:22px 4px 4px;}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header id="header">
-  <div class="header-icons">
-    <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <svg viewBox="0 0 24 24"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
-  <div id="page-title">Telemetry</div>
-  <div class="battery-wrap">
-    <span>100%</span>
-    <svg viewBox="0 0 24 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="#888" stroke-width="1"/>
-      <rect x="21.5" y="3.5" width="2" height="5" rx="1" fill="#888"/>
-      <rect x="2" y="2" width="16" height="8" rx="1.5" fill="#888"/>
-    </svg>
-  </div>
-</header>
-
-<!-- SURFACES -->
-<div id="surfaces-wrap">
-  <div id="surfaces-track">
-    <!-- Surface 1: Telemetry -->
-    <div class="surface" id="surface-1">
-      <div class="surface-label">Session History</div>
-      <div id="log-list"></div>
+<div id="scroller">
+  <!-- ============ SURFACE 1: TELEMETRY ============ -->
+  <section class="surface">
+    <div class="hdr">
+      <div class="side" id="hdrIcons1"></div>
+      <div class="title">Telemetry Logs</div>
+      <div class="side r"><span class="batt">100%</span><span id="battIco1"></span></div>
     </div>
+    <div class="body" id="logFeed">
+      <div class="empty">No sessions logged yet. Run a session on the dashboard.</div>
+    </div>
+  </section>
 
-    <!-- Surface 2: Dashboard -->
-    <div class="surface" id="surface-2" style="overflow:hidden;">
-      <div id="dashboard">
-        <!-- Split Dial -->
-        <div id="dial-wrap">
-          <canvas id="dial-canvas"></canvas>
-          <div id="dial-center">
-            <div id="dial-temp-display">450°</div>
-            <div id="dial-temp-unit">FAHRENHEIT</div>
-            <div id="dial-time-display">0:45</div>
-            <div id="dial-status">IDLE</div>
+  <!-- ============ SURFACE 2: DASHBOARD ============ -->
+  <section class="surface">
+    <div class="hdr">
+      <div class="side" id="hdrIcons2"></div>
+      <div class="title">OUROS ACTIVE</div>
+      <div class="side r"><span class="batt">100%</span><span id="battIco2"></span></div>
+    </div>
+    <div class="body">
+      <div class="dash">
+        <div class="dialwrap">
+          <canvas id="dial" width="460" height="460" style="width:230px;height:230px;"></canvas>
+          <div class="hub" id="hub">
+            <div>
+              <div class="temp" id="hubTemp">450<small>°</small></div>
+              <div class="sub" id="hubTime">60s</div>
+              <div class="state" id="hubState">READY</div>
+            </div>
           </div>
-          <!-- Invisible sliders - circular approximation via CSS trick -->
-          <input type="range" id="slider-temp" min="350" max="550" value="450" step="5" style="position:absolute;top:50%;left:50%;width:80%;transform:translate(-50%,-50%) rotate(-90deg);opacity:0;pointer-events:all;cursor:pointer;height:80%;">
-          <input type="range" id="slider-time" min="30" max="120" value="45" step="5" style="position:absolute;top:50%;left:50%;width:80%;transform:translate(-50%,-50%) rotate(90deg);opacity:0;pointer-events:all;cursor:pointer;height:80%;">
         </div>
 
-        <!-- Telemetry Graph -->
-        <div id="tele-graph-wrap">
-          <canvas id="tele-canvas"></canvas>
-          <div class="tele-labels">
-            <span class="tele-lbl"><span class="tele-lbl-dot" id="temp-dot-color" style="background:#00d4ff"></span><span style="color:#888;font-size:8px;letter-spacing:.1em">TEMP</span></span>
-            <span class="tele-lbl"><span class="tele-lbl-dot" style="background:#fff"></span><span style="color:#888;font-size:8px;letter-spacing:.1em">FLUX</span></span>
-          </div>
-          <div id="tele-hold-overlay"></div>
+        <div class="curvetoggle" id="curveToggle">
+          <button class="seg on" data-curve="steady">Steady</button>
+          <button class="seg" data-curve="crescendo">Crescendo</button>
         </div>
 
-        <!-- Slide to Sesh -->
-        <div id="slide-wrap">
-          <div id="slide-track-fill"></div>
-          <div id="slide-thumb">
-            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="width:100%;">
+          <div class="lblrow"><span>Temp</span><span>Energy Flux</span></div>
+          <div class="graphwrap">
+            <canvas id="liveGraph" width="700" height="160"></canvas>
+            <span class="gylabel" style="top:4px;left:6px;">600°F</span>
+            <span class="gylabel" style="top:50%;left:6px;transform:translateY(-50%);">445°F</span>
+            <span class="gylabel" style="bottom:4px;left:6px;">70°F</span>
+            <span class="gylabel" style="top:4px;right:6px;">80W</span>
+            <span class="gylabel" style="bottom:4px;right:6px;">0W</span>
           </div>
-          <div id="slide-label">Slide to Sesh</div>
         </div>
-        <button id="abort-btn">■ Abort Session</button>
+
+        <div class="slide" id="slide">
+          <div class="fill" id="slideFill"></div>
+          <div class="txt" id="slideTxt">Slide to Sesh</div>
+          <div class="thumb" id="slideThumb">›</div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Surface 3: Profile Vault -->
-    <div class="surface" id="surface-3">
-      <div class="surface-label">Profile Vault</div>
-      <div class="vault-section-title">On-Device Presets</div>
-      <div id="presets-list"></div>
-      <div class="vault-section-title">My Vault Library</div>
-      <div id="vault-list"></div>
-      <button id="add-profile-btn">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        New Profile
-      </button>
+  <!-- ============ SURFACE 3: VAULT ============ -->
+  <section class="surface">
+    <div class="hdr">
+      <div class="side"><button class="iconbtn add" id="addBtn">+</button></div>
+      <div class="title">Profile Vault</div>
+      <div class="side r"><button class="iconbtn" id="gearBtn">⚙</button></div>
+    </div>
+    <div class="body">
+      <div class="seclbl">On-Device Presets</div>
+      <div id="presetList"></div>
+      <div class="seclbl" style="margin-top:22px;">My Vault Library</div>
+      <div id="vaultList"><div class="empty" style="margin-top:10px;">Library empty.</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- Swipe zone -->
+<div class="swipezone" id="swipezone">
+  <div class="dot-pg" data-i="0"></div>
+  <div class="dot-pg on" data-i="1"></div>
+  <div class="dot-pg" data-i="2"></div>
+  <div class="swipehint">swipe here to navigate</div>
+</div>
+
+<!-- Modal A: Config Suite -->
+<div class="modal" id="cfgModal">
+  <div class="mhead">
+    <button class="closeb" id="cfgCancel">Cancel</button>
+    <h2 id="cfgTitle">Configuration Suite</h2>
+    <span style="width:54px;"></span>
+  </div>
+  <div class="mbody">
+    <div class="field"><label>Profile Identifier Label</label><input type="text" id="f_name" placeholder="Custom Profile"></div>
+    <div class="field"><label>Temperature Threshold <span class="rngval" id="f_tempval">450°F</span></label><input type="range" id="f_temp" min="350" max="550" value="450"></div>
+    <div class="field"><label>Session Window Duration <span class="rngval" id="f_timeval">60s</span></label><input type="range" id="f_time" min="30" max="120" value="60"></div>
+    <div class="field"><label>LED Identification Tint</label><select id="f_led">
+      <option value="cyan">Ion Cyan Accent</option><option value="amethyst">Deep Amethyst Orchid</option>
+      <option value="red">Crimson Red Fury</option><option value="green">Emerald Sativa Green</option>
+      <option value="white">Raw Titanium White</option></select></div>
+    <div class="field"><label>LED Pulse Frequency Profile</label><select id="f_pulse">
+      <option>Solid Continuous Burn</option><option>Slow Breathing Thermal Wave</option>
+      <option>Rotating Orbit Tracking Loop</option><option>Haptic Pulse Telemetry</option></select></div>
+    <div class="field"><label>Temperature Curve Architecture</label><select id="f_curve">
+      <option>Steady Linear Delivery</option><option>Crescendo Micro-Ramp Step</option></select></div>
+    <div class="field"><label>Hardware Target Base Slot Sync</label><select id="f_slot">
+      <option value="">Unassigned</option><option value="blue">Blue</option><option value="orange">Orange</option>
+      <option value="red">Red</option><option value="white">White</option></select></div>
+    <div class="mbtns">
+      <button class="btn save" id="cfgSave">Save Profile</button>
+      <button class="btn del" id="cfgDel" style="display:none;">Delete</button>
     </div>
   </div>
 </div>
 
-<!-- SWIPE ZONE -->
-<div id="swipe-zone">
-  <div class="dot active" data-idx="0"></div>
-  <div class="dot" data-idx="1"></div>
-  <div class="dot" data-idx="2"></div>
-</div>
-
-<!-- CONFIG MODAL -->
-<div id="modal-overlay"></div>
-<div id="modal-sheet">
-  <div id="modal-handle"></div>
-  <div id="modal-title">New Profile</div>
-  <div class="modal-field">
-    <label class="modal-label">Profile Name</label>
-    <input class="modal-input" id="modal-name" type="text" placeholder="e.g. Flavor Chaser">
+<!-- Modal B: Device Settings -->
+<div class="modal" id="setModal">
+  <div class="mhead">
+    <button class="closeb" id="setBack">Back</button>
+    <h2>Device Terminal</h2>
+    <span style="width:54px;"></span>
   </div>
-  <div class="modal-row">
-    <div class="modal-field">
-      <label class="modal-label">Temperature (°F)</label>
-      <input class="modal-input" id="modal-temp" type="number" min="350" max="550" value="420">
-    </div>
-    <div class="modal-field">
-      <label class="modal-label">Time (sec)</label>
-      <input class="modal-input" id="modal-time" type="number" min="30" max="120" value="45">
-    </div>
-  </div>
-  <div class="modal-field">
-    <label class="modal-label">LED Color</label>
-    <div class="modal-color-row" id="modal-color-row">
-      <div class="color-swatch selected" data-color="cyan" style="background:#00d4ff"></div>
-      <div class="color-swatch" data-color="orange" style="background:#ff6b35"></div>
-      <div class="color-swatch" data-color="red" style="background:#ff2d55"></div>
-      <div class="color-swatch" data-color="white" style="background:#ffffff"></div>
-      <div class="color-swatch" data-color="purple" style="background:#bf5af2"></div>
-      <div class="color-swatch" data-color="green" style="background:#30d158"></div>
-    </div>
-  </div>
-  <div class="modal-field">
-    <label class="modal-label">LED Animation</label>
-    <select class="modal-select" id="modal-anim">
-      <option value="solid">Solid</option>
-      <option value="breathe">Breathe</option>
-      <option value="pulse">Pulse</option>
-      <option value="wave">Wave</option>
-      <option value="chase">Chase</option>
-    </select>
-  </div>
-  <div class="modal-field">
-    <label class="modal-label">Temperature Curve</label>
-    <div class="curve-row">
-      <div class="curve-btn selected" data-curve="steady">Steady</div>
-      <div class="curve-btn" data-curve="crescendo">Crescendo</div>
-    </div>
-  </div>
-  <div class="modal-field">
-    <label class="modal-label">Hardware Sync Slot</label>
-    <select class="modal-select" id="modal-slot">
-      <option value="none">None (Vault Only)</option>
-      <option value="0">Slot 1 (Blue)</option>
-      <option value="1">Slot 2 (Orange)</option>
-      <option value="2">Slot 3 (Red)</option>
-      <option value="3">Slot 4 (White)</option>
-    </select>
-  </div>
-  <div class="modal-footer">
-    <button class="modal-save-btn" id="modal-save">Save Profile</button>
-    <button class="modal-delete-btn" id="modal-delete" style="display:none;">Delete</button>
+  <div class="mbody">
+    <div class="sgroup">Connectivity</div>
+    <div class="srow" data-alert="Scanning Wi-Fi networks..."><span>Wi-Fi Configuration</span><span class="arr">➔</span></div>
+    <div class="srow" data-alert="Scanning BLE Radio..."><span>Bluetooth Connection</span><span class="arr">➔</span></div>
+    <div class="sgroup">Hardware Overrides</div>
+    <div class="srow" data-alert="Initiating thermal calibration..."><span>Device Calibration</span><span class="arr">➔</span></div>
+    <div class="srow" data-alert="Opening LED matrix control..."><span>LED Setting</span><span class="arr">➔</span></div>
+    <div class="srow" data-alert="Loading haptics & sound profile..."><span>Haptics and Sound</span><span class="arr">➔</span></div>
+    <div class="srow" data-alert="Checking for firmware updates..."><span>Firmware Update</span><span class="arr">➔</span></div>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//  DATA & STATE
-// ══════════════════════════════════════════════
-const SLOT_COLORS = ['#4e9eff','#ff6b35','#ff2d55','#f0f0f0'];
-const SLOT_NAMES  = ['Blue','Orange','Red','White'];
+/* ============ ICONS ============ */
+const wifiSvg='<svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M1 4.5C5.5 0.5 12.5 0.5 17 4.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M4 7.5C6.8 5 11.2 5 14 7.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="11.5" r="1.6" fill="white"/></svg>';
+const btSvg='<svg width="12" height="16" viewBox="0 0 12 16" fill="none"><path d="M2 4l8 8-4 3V1l4 3-8 8" stroke="white" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+const battSvg='<svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="2.5" stroke="white" stroke-width="1.2"/><rect x="3" y="3" width="17" height="7" rx="1" fill="var(--cyan)"/><rect x="23" y="4" width="2.5" height="5" rx="1" fill="white"/></svg>';
+document.querySelectorAll('#hdrIcons1,#hdrIcons2').forEach(e=>e.innerHTML=wifiSvg+btSvg);
+document.querySelectorAll('#battIco1,#battIco2').forEach(e=>e.innerHTML=battSvg);
 
-let presets = [
-  { id:'p0', name:'Flavor Chaser', temp:400, time:60, color:'cyan',  anim:'breathe', curve:'steady',    slot:0, isFactory:true },
-  { id:'p1', name:'Cloud Builder', temp:460, time:90, color:'orange', anim:'wave',    curve:'crescendo', slot:1, isFactory:true },
-  { id:'p2', name:'Terp Blast',    temp:490, time:45, color:'red',    anim:'pulse',   curve:'crescendo', slot:2, isFactory:true },
-  { id:'p3', name:'Micro Dose',    temp:370, time:30, color:'white',  anim:'solid',   curve:'steady',    slot:3, isFactory:true },
-];
-let vault = [
-  { id:'v0', name:'Morning Ritual', temp:380, time:50, color:'cyan',   anim:'breathe', curve:'steady', slot:'none' },
-  { id:'v1', name:'Night Cap',      temp:510, time:75, color:'purple', anim:'wave',    curve:'crescendo', slot:'none' },
-];
-let logs = [];
-let nextId = 100;
+/* ============ NAV ============ */
+const scroller=document.getElementById('scroller');
+let page=1;
+function goto(p){page=Math.max(0,Math.min(2,p));scroller.style.transform=`translateX(${-page*100}vw)`;
+  document.querySelectorAll('.dot-pg').forEach((d,i)=>d.classList.toggle('on',i===page));}
+goto(1);
+(function(){const z=document.getElementById('swipezone');let sx=null;
+  const start=x=>sx=x,move=()=>{},end=x=>{if(sx===null)return;const dx=x-sx;if(Math.abs(dx)>40)goto(page+(dx<0?1:-1));sx=null;};
+  z.addEventListener('touchstart',e=>start(e.touches[0].clientX),{passive:true});
+  z.addEventListener('touchend',e=>end(e.changedTouches[0].clientX));
+  z.addEventListener('mousedown',e=>start(e.clientX));
+  window.addEventListener('mouseup',e=>{if(sx!==null)end(e.clientX);});
+  document.querySelectorAll('.dot-pg').forEach(d=>d.addEventListener('click',()=>goto(+d.dataset.i)));
+})();
 
-// Dashboard state
-let targetTemp = 450;
-let sessionTime = 45;
-let activeCurve = 'steady';
-
-// State machine
-const STATE = { IDLE:'IDLE', MELTING:'MELTING', HOLDING:'HOLDING', EXTRACTING:'EXTRACTING', PAUSED:'PAUSED' };
-let appState = STATE.IDLE;
-let sessionSecondsLeft = 45;
-let sessionSecondsTotal = 45;
-let lastTickTime = 0;
-let isHolding = false;
-
-// Telemetry ring buffer
-const TELE_LEN = 200;
-let teleTemp = new Array(TELE_LEN).fill(72);
-let teleFlux = new Array(TELE_LEN).fill(0);
-let teleHead = 0;
-
-// Physics
-let physTemp = 72;
-let physFlux = 0;
-const ROOM_TEMP = 72;
-const HOLD_TEMP = 200;
-
-// Session recording
-let sessionRecord = [];
-
-// Modal state
-let modalMode = 'new'; // 'new' | 'edit'
-let modalEditId = null;
-let modalSelectedColor = 'cyan';
-let modalSelectedCurve = 'steady';
-
-// ══════════════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════════════
-let currentPage = 0;
-const PAGE_TITLES = ['Telemetry','Dashboard','Vault'];
-const track = document.getElementById('surfaces-track');
-const dots  = document.querySelectorAll('.dot');
-const pageTitle = document.getElementById('page-title');
-
-function goToPage(idx, animate=true) {
-  if (idx < 0 || idx > 2) return;
-  currentPage = idx;
-  track.style.transition = animate ? 'transform 0.38s cubic-bezier(0.25,0.8,0.25,1)' : 'none';
-  track.style.transform = `translateX(${-idx * 100}vw)`;
-  dots.forEach((d,i) => d.classList.toggle('active', i===idx));
-  pageTitle.textContent = PAGE_TITLES[idx];
+/* ============ COLOR CALC ============ */
+function tempColor(t){ // 350->550
+  const r=Math.max(0,Math.min(1,(t-350)/200));
+  let c1,c2,f;
+  if(r<0.5){c1=[63,224,224];c2=[255,140,59];f=r/0.5;}
+  else{c1=[255,140,59];c2=[255,70,70];f=(r-0.5)/0.5;}
+  const m=c1.map((v,i)=>Math.round(v+(c2[i]-v)*f));
+  return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 
-// Swipe zone touch handling
-const swipeZone = document.getElementById('swipe-zone');
-let swipeStartX = null, swipeStartPage = null;
+/* ============ STATE ============ */
+const S={state:'IDLE',temp:72,flux:0,target:450,window:60,remaining:60,
+  peak:0,sum:0,n:0,hist:[],rec:[],holding:false,startTs:0,
+  curve:'steady', inhale:0, drawTarget:450};
+let target=450,windowS=60;
 
-swipeZone.addEventListener('touchstart', e => {
-  swipeStartX = e.touches[0].clientX;
-  swipeStartPage = currentPage;
-  track.style.transition = 'none';
-}, { passive: true });
-
-swipeZone.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (swipeStartX === null) return;
-  const dx = e.touches[0].clientX - swipeStartX;
-  const w  = window.innerWidth;
-  const offset = (-swipeStartPage * w) + dx;
-  track.style.transform = `translateX(${offset}px)`;
-}, { passive: false });
-
-swipeZone.addEventListener('touchend', e => {
-  if (swipeStartX === null) return;
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  if (Math.abs(dx) > 40) {
-    goToPage(dx < 0 ? Math.min(2, swipeStartPage+1) : Math.max(0, swipeStartPage-1));
-  } else {
-    goToPage(swipeStartPage);
-  }
-  swipeStartX = null;
-}, { passive: true });
-
-// Dot taps
-dots.forEach(d => d.addEventListener('click', () => goToPage(+d.dataset.idx)));
-
-// ══════════════════════════════════════════════
-//  DIAL CANVAS
-// ══════════════════════════════════════════════
-const dialCanvas = document.getElementById('dial-canvas');
-const dialCtx    = dialCanvas.getContext('2d');
-const dialCenter = document.getElementById('dial-center');
-const dialTempEl = document.getElementById('dial-temp-display');
-const dialTimeEl = document.getElementById('dial-time-display');
-const dialStatus = document.getElementById('dial-status');
-
-function resizeDial() {
-  const wrap = document.getElementById('dial-wrap');
-  const s = wrap.offsetWidth;
-  dialCanvas.width  = s * devicePixelRatio;
-  dialCanvas.height = s * devicePixelRatio;
-  dialCanvas.style.width  = s + 'px';
-  dialCanvas.style.height = s + 'px';
+/* ============ DIAL ============ */
+const dial=document.getElementById('dial'),dctx=dial.getContext('2d');
+const hubTemp=document.getElementById('hubTemp'),hubTime=document.getElementById('hubTime');
+// Temp arc: top 2/3, sweeps clockwise from upper-left to upper-right.
+const TARC_S=-Math.PI*1.15, TARC_E=Math.PI*0.15;
+// Time arc: bottom 1/3, drawn counter-clockwise from bottom-left to bottom-right.
+const WARC_A=Math.PI*0.65, WARC_B=Math.PI*0.35;
+function var_cyan(){return getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim()||'#3fe0e0';}
+function drawDial(){
+  dctx.clearRect(0,0,460,460);
+  const cx=230,cy=230,rad=200;
+  dctx.lineWidth=16;dctx.lineCap='round';
+  // temp track + fill
+  dctx.strokeStyle='#242427';
+  dctx.beginPath();dctx.arc(cx,cy,rad,TARC_S,TARC_E);dctx.stroke();
+  const tf=(target-350)/200, tEnd=TARC_S+(TARC_E-TARC_S)*tf;
+  dctx.strokeStyle=tempColor(target);
+  dctx.beginPath();dctx.arc(cx,cy,rad,TARC_S,tEnd);dctx.stroke();
+  dctx.fillStyle='#fff';
+  dctx.beginPath();dctx.arc(cx+rad*Math.cos(tEnd),cy+rad*Math.sin(tEnd),9,0,7);dctx.fill();
+  // time track + fill (counter-clockwise)
+  dctx.strokeStyle='#242427';
+  dctx.beginPath();dctx.arc(cx,cy,rad,WARC_A,WARC_B,true);dctx.stroke();
+  const wf=(windowS-30)/90, sweep=(WARC_A-WARC_B), wAng=WARC_A-sweep*wf;
+  dctx.strokeStyle=var_cyan();
+  dctx.beginPath();dctx.arc(cx,cy,rad,WARC_A,wAng,true);dctx.stroke();
+  dctx.fillStyle='#fff';
+  dctx.beginPath();dctx.arc(cx+rad*Math.cos(wAng),cy+rad*Math.sin(wAng),8,0,7);dctx.fill();
+}
+function syncDial(){
+  S.target=target;S.window=windowS;
+  if(S.state==='IDLE'){S.remaining=windowS;}
+  hubTemp.innerHTML=`${Math.round(S.state==='IDLE'?target:S.temp)}<small>°</small>`;
+  hubTemp.style.color=tempColor(target);
+  hubTime.textContent=`${Math.ceil(S.remaining)}s`;
   drawDial();
 }
-
-function tempToColor(t) {
-  // 350→550: cyan→orange→red
-  const pct = Math.max(0, Math.min(1, (t - 350) / 200));
-  if (pct < 0.5) {
-    const p = pct * 2;
-    return `rgb(${Math.round(p*255)},${Math.round(212-p*77)},${Math.round(255-p*255)})`;
-  } else {
-    const p = (pct - 0.5) * 2;
-    return `rgb(255,${Math.round(135-p*90)},${Math.round(p*0)})`;
-  }
+/* ---- curve mode toggle (steady / crescendo) ---- */
+const curveToggle=document.getElementById('curveToggle');
+function setCurve(mode){
+  S.curve=mode;
+  curveToggle.querySelectorAll('.seg').forEach(b=>b.classList.toggle('on',b.dataset.curve===mode));
 }
-
-function drawDial() {
-  const w = dialCanvas.width, h = dialCanvas.height;
-  const cx = w/2, cy = h/2;
-  const dpr = devicePixelRatio;
-  const R = w * 0.42;
-  const sw = w * 0.038;
-
-  dialCtx.clearRect(0, 0, w, h);
-
-  // BG track (full circle)
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R, 0, Math.PI*2);
-  dialCtx.strokeStyle = '#1e1e1e';
-  dialCtx.lineWidth = sw;
-  dialCtx.stroke();
-
-  // TOP 2/3 ARC — Temperature (from ~0.65π to 0.35π going counter-clockwise, so CW from left to right over top)
-  // We'll go clockwise from 0.65π to 2.35π (which wraps over top)
-  const tempStartAngle = Math.PI * 0.65;
-  const tempEndAngle   = Math.PI * 2.35;
-  const tempPct = (targetTemp - 350) / 200;
-
-  // Track
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R, tempStartAngle, tempEndAngle);
-  dialCtx.strokeStyle = '#1e1e1e';
-  dialCtx.lineWidth = sw;
-  dialCtx.lineCap = 'round';
-  dialCtx.stroke();
-
-  // Active temp arc
-  const tempActiveEnd = tempStartAngle + (tempEndAngle - tempStartAngle) * tempPct;
-  const tColor = tempToColor(targetTemp);
-
-  // Gradient glow
-  const grad = dialCtx.createLinearGradient(cx - R, cy, cx + R, cy);
-  grad.addColorStop(0, '#00d4ff');
-  grad.addColorStop(0.5, '#ff6b35');
-  grad.addColorStop(1, '#ff2d55');
-
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R, tempStartAngle, tempActiveEnd);
-  dialCtx.strokeStyle = grad;
-  dialCtx.lineWidth = sw;
-  dialCtx.lineCap = 'round';
-  dialCtx.stroke();
-
-  // BOTTOM 1/3 ARC — Time (from 0.65π to 0.35π going counter-clockwise / CCW)
-  const timeStartAngle = Math.PI * 0.65;  // left side, below center
-  const timeEndAngle   = Math.PI * 0.35;  // right side, below center (going CW through bottom)
-  // actually we want bottom arc drawn CW from left bottom to right bottom
-  // 0.65π ≈ 117°, 2.35π going the other way... let's think:
-  // Bottom arc: start at ~0.65π (117°, lower-left), end at ~2.35π would go over top.
-  // We want the bottom arc: from π*0.65 going CW (increasing angle) to π*1.35 is bottom.
-  // Let's redefine: bottom arc from 0.65π to 1.35π clockwise (that's the bottom 70° on each side)
-  // Actually spec says "bottom 1/3 arc draws left to right CCW from 0.65π to 0.35π"
-  // 0.35π = 63°, 0.65π = 117°. CCW from 0.65π to 0.35π goes backward (short arc over top). That can't be right.
-  // Interpretation: bottom arc sits from ~200° to ~340° (the lower portion).
-  // Let's use: start = π*1.15 (207°), end = π*1.85 (333°), clockwise = bottom arc
-  const bStart = Math.PI * 1.15;
-  const bEnd   = Math.PI * 1.85;
-  const timePct = (sessionTime - 30) / 90;
-
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R, bStart, bEnd);
-  dialCtx.strokeStyle = '#1e1e1e';
-  dialCtx.lineWidth = sw * 0.7;
-  dialCtx.lineCap = 'round';
-  dialCtx.stroke();
-
-  const timeActiveEnd = bStart + (bEnd - bStart) * timePct;
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R, bStart, timeActiveEnd);
-  dialCtx.strokeStyle = '#f0f0f0';
-  dialCtx.lineWidth = sw * 0.7;
-  dialCtx.lineCap = 'round';
-  dialCtx.stroke();
-
-  // Inner ring accent
-  dialCtx.beginPath();
-  dialCtx.arc(cx, cy, R * 0.62, 0, Math.PI * 2);
-  dialCtx.strokeStyle = '#1e1e1e';
-  dialCtx.lineWidth = 1 * dpr;
-  dialCtx.stroke();
-
-  // Labels
-  const labelR = R * 0.72;
-  const fs = w * 0.028;
-  dialCtx.font = `${fs}px "DM Mono"`;
-  dialCtx.fillStyle = '#444';
-  dialCtx.textAlign = 'center';
-  dialCtx.textBaseline = 'middle';
-  // Temp min/max
-  const tMinA = tempStartAngle + 0.04;
-  const tMaxA = tempEndAngle   - 0.04;
-  dialCtx.fillText('350°', cx + labelR * Math.cos(tMinA), cy + labelR * Math.sin(tMinA));
-  dialCtx.fillText('550°', cx + labelR * Math.cos(tMaxA), cy + labelR * Math.sin(tMaxA));
-  // Time min/max
-  dialCtx.fillText('30s', cx + (R * 0.76) * Math.cos(bStart + 0.04), cy + (R * 0.76) * Math.sin(bStart + 0.04));
-  dialCtx.fillText('2m',  cx + (R * 0.76) * Math.cos(bEnd   - 0.04), cy + (R * 0.76) * Math.sin(bEnd   - 0.04));
-}
-
-// Dial sliders
-const sliderTemp = document.getElementById('slider-temp');
-const sliderTime = document.getElementById('slider-time');
-
-sliderTemp.addEventListener('input', () => {
-  targetTemp = +sliderTemp.value;
-  updateDialDisplay();
-  drawDial();
+curveToggle.querySelectorAll('.seg').forEach(b=>{
+  b.addEventListener('click',()=>setCurve(b.dataset.curve));
 });
-sliderTime.addEventListener('input', () => {
-  sessionTime = +sliderTime.value;
-  if (appState === STATE.IDLE || appState === STATE.HOLDING) {
-    sessionSecondsLeft = sessionTime;
-    sessionSecondsTotal = sessionTime;
+/* ---- pointer-angle dragging directly on the canvas ---- */
+let dialDrag=null; // 'temp' | 'time'
+function dialAngle(e){
+  const r=dial.getBoundingClientRect();
+  const px=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const py=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  const cx=r.width/2, cy=r.height/2;
+  return {ang:Math.atan2(py-cy,px-cx),top:py<cy};
+}
+function dialApply(e){
+  if(!dialDrag)return;
+  let {ang}=dialAngle(e);
+  if(dialDrag==='temp'){
+    // Temp sweep runs clockwise from TARC_S(≈-207°) to TARC_E(≈27°).
+    // Normalise the pointer angle into a continuous range starting at TARC_S.
+    let a=ang;
+    while(a<TARC_S)a+=Math.PI*2;
+    while(a>TARC_S+Math.PI*2)a-=Math.PI*2;
+    let f=(a-TARC_S)/(TARC_E-TARC_S);
+    f=Math.max(0,Math.min(1,f));
+    target=Math.round(350+f*200);
+  }else{
+    // Time arc occupies the lower half, measured CCW from WARC_A toward WARC_B.
+    let a=ang; if(a<0)a+=Math.PI*2;
+    let f=(WARC_A-a)/(WARC_A-WARC_B);
+    f=Math.max(0,Math.min(1,f));
+    windowS=Math.round(30+f*90);
   }
-  updateDialDisplay();
-  drawDial();
-});
+  syncDial();
+}
+function dialStart(e){
+  const {top}=dialAngle(e);
+  dialDrag=top?'temp':'time';
+  dialApply(e);
+}
+dial.addEventListener('mousedown',e=>{dialStart(e);});
+dial.addEventListener('touchstart',e=>{e.preventDefault();dialStart(e);},{passive:false});
+window.addEventListener('mousemove',e=>{if(dialDrag)dialApply(e);});
+window.addEventListener('touchmove',e=>{if(dialDrag){e.preventDefault();dialApply(e);}},{passive:false});
+window.addEventListener('mouseup',()=>{dialDrag=null;});
+window.addEventListener('touchend',()=>{dialDrag=null;});
 
-function updateDialDisplay() {
-  dialTempEl.textContent = targetTemp + '°';
-  const m = Math.floor(sessionSecondsLeft / 60);
-  const s = sessionSecondsLeft % 60;
-  dialTimeEl.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}s`;
+/* ============ LIVE GRAPH ============ */
+const lg=document.getElementById('liveGraph'),lctx=lg.getContext('2d');
+const GW=700,GH=160,MAXP=150;
+// Temp axis curve. 1 = linear. >1 expands the hot working range and
+// compresses the cool/melt end. Try 1.5 (gentle), 2 (clear), 3 (dramatic).
+const TEMP_EXP=2;
+const T_MIN=70, T_MAX=600;
+function tempFrac(t){ // -> 0..1 along the y axis, with power scaling
+  let f=(t-T_MIN)/(T_MAX-T_MIN);
+  f=Math.max(0,Math.min(1,f));
+  return Math.pow(f,TEMP_EXP);
+}
+function drawGraph(){
+  lctx.clearRect(0,0,GW,GH);
+  lctx.strokeStyle='#242428';lctx.lineWidth=1;
+  for(let i=1;i<4;i++){lctx.beginPath();lctx.moveTo(0,GH/4*i);lctx.lineTo(GW,GH/4*i);lctx.stroke();}
+  const pts=S.hist;if(!pts.length)return;
+  const stepX=GW/MAXP;
+  // temp line (power-scaled, bottom..top)
+  lctx.lineWidth=2;lctx.lineJoin='round';
+  lctx.strokeStyle=tempColor(S.temp);
+  lctx.beginPath();
+  pts.forEach((p,i)=>{const x=GW-(pts.length-1-i)*stepX;const y=GH-tempFrac(p.t)*GH;i?lctx.lineTo(x,y):lctx.moveTo(x,y);});
+  lctx.stroke();
+  // flux line (0-80 -> bottom..top) sharp white, stays linear
+  lctx.strokeStyle='#fff';lctx.lineWidth=1.6;
+  lctx.beginPath();
+  pts.forEach((p,i)=>{const x=GW-(pts.length-1-i)*stepX;const y=GH-(p.f/80)*GH;i?lctx.lineTo(x,y):lctx.moveTo(x,y);});
+  lctx.stroke();
 }
 
-// ══════════════════════════════════════════════
-//  TELEMETRY CANVAS
-// ══════════════════════════════════════════════
-const teleCanvas = document.getElementById('tele-canvas');
-const teleCtx = teleCanvas.getContext('2d');
-
-function resizeTele() {
-  const wrap = document.getElementById('tele-graph-wrap');
-  teleCanvas.width  = wrap.offsetWidth * devicePixelRatio;
-  teleCanvas.height = 80 * devicePixelRatio;
-  teleCanvas.style.width  = wrap.offsetWidth + 'px';
-  teleCanvas.style.height = '80px';
+/* ============ HUB / STATE MACHINE ============ */
+const hub=document.getElementById('hub'),hubState=document.getElementById('hubState');
+function setState(s){
+  S.state=s;hub.classList.remove('pulse','draw');
+  if(s==='IDLE'){hubState.textContent='READY';}
+  else if(s==='MELTING'){hubState.textContent='MELTING';}
+  else if(s==='HOLDING'){hubState.textContent='READY';hub.classList.add('pulse');}
+  else if(s==='EXTRACTING'){hubState.textContent='DRAWING';hub.classList.add('draw');}
+  else if(s==='PAUSED_EXTRACTING'){hubState.textContent='READY';hub.classList.add('pulse');}
 }
+function rnd(j){return (Math.random()-0.5)*j;}
+function approach(cur,goal,rate){return cur+(goal-cur)*rate;}
 
-function drawTeleGraph() {
-  const w = teleCanvas.width, h = teleCanvas.height;
-  teleCtx.clearRect(0, 0, w, h);
-
-  // Grid
-  teleCtx.strokeStyle = '#1a1a1a';
-  teleCtx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = h * i / 4;
-    teleCtx.beginPath(); teleCtx.moveTo(0, y); teleCtx.lineTo(w, y); teleCtx.stroke();
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  let goalT=72,goalF=0;
+  switch(S.state){
+    case 'IDLE': goalT=72;goalF=0;S.temp=approach(S.temp,72,dt*0.6);S.flux=approach(S.flux,0,dt*3);break;
+    case 'MELTING':
+      goalF=70+rnd(8);S.flux=approach(S.flux,goalF,dt*6);
+      S.temp=approach(S.temp,200,dt*1.6);
+      if(S.temp>=199){S.temp=200;setState('HOLDING');}break;
+    case 'HOLDING':
+      S.flux=approach(S.flux,10+rnd(3),dt*4);S.temp=approach(S.temp,200,dt*2);break;
+    case 'EXTRACTING':
+      S.flux=approach(S.flux,48+rnd(6),dt*5);S.temp=approach(S.temp,S.drawTarget,dt*2.2);
+      S.remaining-=dt;
+      if(S.remaining<=0){S.remaining=0;completeSession(false);}break;
+    case 'PAUSED_EXTRACTING':
+      S.flux=approach(S.flux,8+rnd(2),dt*4);S.temp=approach(S.temp,200,dt*1.8);
+      S.remaining-=dt; // session clock keeps running between draws
+      if(S.remaining<=0){S.remaining=0;completeSession(false);}break;
   }
-  for (let i = 0; i <= 8; i++) {
-    const x = w * i / 8;
-    teleCtx.beginPath(); teleCtx.moveTo(x, 0); teleCtx.lineTo(x, h); teleCtx.stroke();
+  if(S.state!=='IDLE'){
+    S.peak=Math.max(S.peak,S.flux);S.sum+=S.flux;S.n++;
+    S.rec.push({t:S.temp,f:Math.max(0,S.flux)}); // full-run record for the log graph
   }
-
-  const count = TELE_LEN;
-  const step = w / (count - 1);
-
-  // Draw temp line
-  const tempColor = tempToColor(physTemp);
-  document.getElementById('temp-dot-color').style.background = tempColor;
-
-  teleCtx.beginPath();
-  teleCtx.strokeStyle = tempColor;
-  teleCtx.lineWidth = 1.5;
-  teleCtx.lineJoin = 'round';
-  for (let i = 0; i < count; i++) {
-    const idx = (teleHead + i) % TELE_LEN;
-    const t = teleTemp[idx];
-    const x = i * step;
-    const y = h - ((t - 70) / (600 - 70)) * h;
-    if (i === 0) teleCtx.moveTo(x, y); else teleCtx.lineTo(x, y);
-  }
-  teleCtx.stroke();
-
-  // Draw flux line
-  teleCtx.beginPath();
-  teleCtx.strokeStyle = 'rgba(255,255,255,0.85)';
-  teleCtx.lineWidth = 1.5;
-  teleCtx.lineJoin = 'round';
-  for (let i = 0; i < count; i++) {
-    const idx = (teleHead + i) % TELE_LEN;
-    const f = teleFlux[idx];
-    const x = i * step;
-    const y = h - (f / 80) * h;
-    if (i === 0) teleCtx.moveTo(x, y); else teleCtx.lineTo(x, y);
-  }
-  teleCtx.stroke();
+  S.hist.push({t:S.temp,f:Math.max(0,S.flux)});
+  if(S.hist.length>MAXP)S.hist.shift();
+  // readouts
+  if(S.state!=='IDLE'){hubTemp.innerHTML=`${Math.round(S.temp)}<small>°</small>`;hubTemp.style.color=tempColor(S.temp);}
+  hubTime.textContent=`${Math.ceil(S.remaining)}s`;
+  drawGraph();
+  requestAnimationFrame(loop);
 }
+requestAnimationFrame(loop);
 
-// ══════════════════════════════════════════════
-//  STATE MACHINE & RAF
-// ══════════════════════════════════════════════
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-let rafId = null;
-function startRAF() {
-  if (rafId) return;
-  lastTickTime = performance.now();
-  rafId = requestAnimationFrame(rafLoop);
-}
-
-function rafLoop(now) {
-  rafId = requestAnimationFrame(rafLoop);
-  const dt = Math.min((now - lastTickTime) / 1000, 0.05);
-  lastTickTime = now;
-
-  let targetFlux = 0;
-  let targetPhysTemp = ROOM_TEMP;
-
-  switch (appState) {
-    case STATE.IDLE:
-      targetFlux = 0;
-      targetPhysTemp = ROOM_TEMP;
-      break;
-
-    case STATE.MELTING:
-      targetFlux = 68 + Math.random() * 4;
-      targetPhysTemp = 200;
-      if (physTemp >= 195) {
-        appState = STATE.HOLDING;
-        dialStatus.textContent = 'HOLD TO DRAW';
-        dialStatus.classList.add('pulsing');
-        showAbortBtn(true);
-      }
-      break;
-
-    case STATE.HOLDING:
-      targetFlux = 8 + Math.random() * 4;
-      targetPhysTemp = HOLD_TEMP;
-      break;
-
-    case STATE.EXTRACTING:
-      targetFlux = 46 + Math.random() * 4;
-      targetPhysTemp = targetTemp;
-      // Tick session timer
-      if (sessionSecondsLeft > 0) {
-        sessionSecondsLeft = Math.max(0, sessionSecondsLeft - dt);
-        updateDialDisplay();
-      }
-      if (sessionSecondsLeft <= 0) {
-        endSession(true);
-      }
-      // Record
-      sessionRecord.push({ t: physTemp, f: physFlux });
-      break;
-
-    case STATE.PAUSED:
-      targetFlux = 8 + Math.random() * 4;
-      targetPhysTemp = HOLD_TEMP;
-      break;
-  }
-
-  // Smooth physics
-  const tempRate = appState === STATE.MELTING ? 2.5 : appState === STATE.EXTRACTING ? 1.2 : 0.8;
-  physTemp = lerp(physTemp, targetPhysTemp, tempRate * dt);
-  physFlux = lerp(physFlux, targetFlux, 5 * dt);
-
-  // Write to ring buffer
-  teleTemp[teleHead] = physTemp;
-  teleFlux[teleHead] = physFlux;
-  teleHead = (teleHead + 1) % TELE_LEN;
-
-  drawTeleGraph();
-  // Update dial live display if in session
-  if (appState !== STATE.IDLE) {
-    dialTempEl.textContent = Math.round(physTemp) + '°';
-  }
-}
-
-startRAF();
-
-// ══════════════════════════════════════════════
-//  SLIDE TO SESH
-// ══════════════════════════════════════════════
-const slideWrap  = document.getElementById('slide-wrap');
-const slideThumb = document.getElementById('slide-thumb');
-const slideFill  = document.getElementById('slide-track-fill');
-const slideLabel = document.getElementById('slide-label');
-
-let slideDragging = false;
-let slideStartX = 0;
-let slideThumbX = 0;
-
-function getSlideMaxX() {
-  return slideWrap.offsetWidth - 4 - 42 - 4;
-}
-
-function setSlidePos(pct) {
-  const max = getSlideMaxX();
-  const x   = 4 + pct * max;
-  slideThumb.style.left = x + 'px';
-  slideFill.style.width = (pct * 100) + '%';
-  if (pct >= 0.99) {
-    if (appState === STATE.IDLE) triggerMelting();
-  }
-}
-
-function resetSlide() {
-  slideThumb.style.transition = 'left 0.3s ease';
-  slideFill.style.transition  = 'width 0.3s ease';
-  setSlidePos(0);
-  setTimeout(() => {
-    slideThumb.style.transition = '';
-    slideFill.style.transition  = '';
-  }, 350);
-}
-
-slideWrap.addEventListener('touchstart', e => {
-  if (appState !== STATE.IDLE) return;
-  slideDragging = true;
-  slideStartX = e.touches[0].clientX - (parseFloat(slideThumb.style.left || 4) - 4);
-}, { passive: true });
-
-slideWrap.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (!slideDragging) return;
-  const max = getSlideMaxX();
-  const newX = Math.max(0, Math.min(max, e.touches[0].clientX - slideStartX));
-  setSlidePos(newX / max);
-}, { passive: false });
-
-slideWrap.addEventListener('touchend', e => {
-  if (!slideDragging) return;
-  slideDragging = false;
-  const pct = (parseFloat(slideThumb.style.left || 4) - 4) / getSlideMaxX();
-  if (pct < 0.99) resetSlide();
-});
-
-// Mouse support
-slideWrap.addEventListener('mousedown', e => {
-  if (appState !== STATE.IDLE) return;
-  slideDragging = true;
-  slideStartX = e.clientX - (parseFloat(slideThumb.style.left || 4) - 4);
-  document.addEventListener('mousemove', onSlideMouseMove);
-  document.addEventListener('mouseup', onSlideMouseUp);
-});
-function onSlideMouseMove(e) {
-  if (!slideDragging) return;
-  const max = getSlideMaxX();
-  const newX = Math.max(0, Math.min(max, e.clientX - slideStartX));
-  setSlidePos(newX / max);
-}
-function onSlideMouseUp() {
-  slideDragging = false;
-  document.removeEventListener('mousemove', onSlideMouseMove);
-  document.removeEventListener('mouseup', onSlideMouseUp);
-  const pct = (parseFloat(slideThumb.style.left || 4) - 4) / getSlideMaxX();
-  if (pct < 0.99) resetSlide();
-}
-
-function triggerMelting() {
-  appState = STATE.MELTING;
-  sessionSecondsLeft = sessionTime;
-  sessionSecondsTotal = sessionTime;
-  sessionRecord = [];
-  dialStatus.textContent = 'MELTING';
-  dialStatus.classList.remove('pulsing');
-  slideLabel.textContent = 'Heating…';
-  slideWrap.style.opacity = '0.4';
-  slideWrap.style.pointerEvents = 'none';
-}
-
-function showAbortBtn(show) {
-  document.getElementById('abort-btn').style.display = show ? 'block' : 'none';
-}
-
-document.getElementById('abort-btn').addEventListener('click', () => {
-  endSession(false);
-});
-
-// ══════════════════════════════════════════════
-//  HOLD TO INHALE (Telemetry overlay + Center Hub)
-// ══════════════════════════════════════════════
-const holdOverlay = document.getElementById('tele-hold-overlay');
-const dialCenterEl = document.getElementById('dial-center');
-
-function attachHoldListeners(el) {
-  el.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (appState === STATE.HOLDING || appState === STATE.PAUSED) {
-      appState = STATE.EXTRACTING;
-      dialStatus.textContent = 'EXTRACTING';
-      dialStatus.classList.remove('pulsing');
+/* hold-to-inhale */
+function holdStart(){
+  if(S.state==='HOLDING'||S.state==='PAUSED_EXTRACTING'){
+    S.inhale++; // each press is a fresh inhale
+    if(S.curve==='crescendo'){
+      // 1st: target-40, 2nd: target-20, 3rd onward: target
+      const off=S.inhale===1?40:S.inhale===2?20:0;
+      S.drawTarget=S.target-off;
+    }else{
+      S.drawTarget=S.target; // steady: always full target
     }
-  }, { passive: false });
-  el.addEventListener('touchend', () => {
-    if (appState === STATE.EXTRACTING) {
-      appState = STATE.PAUSED;
-      dialStatus.textContent = 'PAUSED';
-      dialStatus.classList.remove('pulsing');
-    }
-  });
-  el.addEventListener('mousedown', () => {
-    if (appState === STATE.HOLDING || appState === STATE.PAUSED) {
-      appState = STATE.EXTRACTING;
-      dialStatus.textContent = 'EXTRACTING';
-      dialStatus.classList.remove('pulsing');
-    }
-  });
-  el.addEventListener('mouseup', () => {
-    if (appState === STATE.EXTRACTING) {
-      appState = STATE.PAUSED;
-      dialStatus.textContent = 'PAUSED';
-      dialStatus.classList.remove('pulsing');
-    }
-  });
-}
-
-attachHoldListeners(holdOverlay);
-attachHoldListeners(dialCenterEl);
-
-// ══════════════════════════════════════════════
-//  END SESSION
-// ══════════════════════════════════════════════
-function endSession(completed) {
-  const recCopy = [...sessionRecord];
-  createLogEntry(recCopy, completed);
-
-  appState = STATE.IDLE;
-  physTemp = ROOM_TEMP;
-  physFlux = 0;
-  sessionSecondsLeft = sessionTime;
-
-  dialStatus.textContent = 'IDLE';
-  dialStatus.classList.remove('pulsing');
-  updateDialDisplay();
-  showAbortBtn(false);
-
-  slideLabel.textContent = 'Slide to Sesh';
-  slideWrap.style.opacity = '1';
-  slideWrap.style.pointerEvents = 'all';
-  resetSlide();
-}
-
-// ══════════════════════════════════════════════
-//  TELEMETRY LOG ENTRIES
-// ══════════════════════════════════════════════
-function createLogEntry(record, completed) {
-  const id = 'log' + (nextId++);
-  const now = new Date();
-  const peakFlux  = record.reduce((m, r) => Math.max(m, r.f), 0);
-  const avgFlux   = record.length ? record.reduce((s, r) => s + r.f, 0) / record.length : 0;
-  const activeProfile = presets.find(p => p.temp === targetTemp && p.time === sessionTime) || null;
-
-  logs.unshift({
-    id, record,
-    datetime: now,
-    temp: targetTemp,
-    time: sessionTime,
-    profileName: activeProfile ? activeProfile.name : 'Custom Session',
-    peakFlux: peakFlux.toFixed(1),
-    avgFlux: avgFlux.toFixed(1),
-    completed
-  });
-
-  renderLogs();
-  // Flash to telemetry page
-  setTimeout(() => goToPage(0), 300);
-}
-
-function renderLogs() {
-  const el = document.getElementById('log-list');
-  if (logs.length === 0) {
-    el.innerHTML = '<div style="color:#444;font-size:12px;text-align:center;margin-top:40px;letter-spacing:.08em;">No sessions yet.<br><br>Head to Dashboard to start.</div>';
-    return;
+    setState('EXTRACTING');
   }
-  el.innerHTML = '';
-  logs.forEach(log => {
-    const card = document.createElement('div');
-    card.className = 'log-card';
-    const d = log.datetime;
-    const dtStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' · ' +
-                  d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-    card.innerHTML = `
-      <div class="log-card-header">
-        <div class="log-card-left">
-          <div class="log-profile-name">${log.profileName}</div>
-          <div class="log-datetime">${dtStr}</div>
-        </div>
-        <div class="log-stats">
-          <div class="log-stat">
-            <div class="log-stat-val">${log.temp}°</div>
-            <div class="log-stat-lbl">Target</div>
-          </div>
-          <div class="log-stat">
-            <div class="log-stat-val">${log.peakFlux}W</div>
-            <div class="log-stat-lbl">Peak</div>
-          </div>
-          <div class="log-stat">
-            <div class="log-stat-val">${log.avgFlux}W</div>
-            <div class="log-stat-lbl">Avg Flux</div>
-          </div>
-        </div>
-      </div>
-      <canvas class="log-canvas" data-logid="${log.id}"></canvas>
-    `;
-    el.appendChild(card);
-    drawLogCanvas(card.querySelector('canvas'), log);
-  });
+}
+function holdEnd(){if(S.state==='EXTRACTING'){setState('PAUSED_EXTRACTING');}}
+[hub,lg].forEach(el=>{
+  el.addEventListener('mousedown',holdStart);el.addEventListener('touchstart',e=>{e.preventDefault();holdStart();},{passive:false});
+  el.addEventListener('mouseup',holdEnd);el.addEventListener('mouseleave',holdEnd);
+  el.addEventListener('touchend',holdEnd);el.addEventListener('touchcancel',holdEnd);
+});
+
+/* ============ SLIDE TO SESH ============ */
+const slide=document.getElementById('slide'),thumb=document.getElementById('slideThumb'),
+  slideTxt=document.getElementById('slideTxt'),slideFill=document.getElementById('slideFill');
+let dragging=false,running=false;
+function thumbPos(x){
+  const r=slide.getBoundingClientRect();let p=x-r.left-30;
+  p=Math.max(4,Math.min(r.width-56,p));thumb.style.left=p+'px';
+  slideFill.style.width=(p+52)+'px';
+  return (p-4)/(r.width-60);
+}
+function sStart(e){if(running){abortSession();return;}dragging=true;thumb.style.cursor='grabbing';}
+function sMove(e){if(!dragging)return;const x=e.touches?e.touches[0].clientX:e.clientX;thumbPos(x);}
+function sEnd(e){if(!dragging)return;dragging=false;const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+  const frac=thumbPos(x);
+  if(frac>0.9){startSession();}else{resetSlide();}}
+thumb.addEventListener('mousedown',sStart);thumb.addEventListener('touchstart',e=>{e.preventDefault();sStart(e);},{passive:false});
+window.addEventListener('mousemove',sMove);window.addEventListener('touchmove',sMove,{passive:false});
+window.addEventListener('mouseup',sEnd);window.addEventListener('touchend',sEnd);
+// Tapping anywhere on the track aborts while a session is running.
+slide.addEventListener('click',()=>{if(running)abortSession();});
+function resetSlide(){const r=slide.getBoundingClientRect();thumb.style.left='4px';slideFill.style.width='60px';}
+function lockSlideRight(){const r=slide.getBoundingClientRect();thumb.style.left=(r.width-56)+'px';slideFill.style.width='100%';}
+
+function startSession(){
+  running=true;slide.classList.add('run');slideTxt.textContent='Tap to Abort';lockSlideRight();
+  S.peak=0;S.sum=0;S.n=0;S.remaining=S.window;S.rec=[];S.inhale=0;
+  setState('MELTING');
+}
+function abortSession(){completeSession(true);}
+function downsample(arr,n){
+  if(arr.length<=n)return arr.slice();
+  const out=[],step=arr.length/n;
+  for(let i=0;i<n;i++)out.push(arr[Math.floor(i*step)]);
+  out.push(arr[arr.length-1]);
+  return out;
+}
+function completeSession(aborted){
+  const data={ts:Date.now(),target:S.target,window:S.window,
+    peak:S.peak,avg:S.n?S.sum/S.n:0,dur:S.window-Math.max(0,S.remaining),
+    profile:currentProfileName,hist:downsample(S.rec,120),aborted};
+  if(S.rec.length>3)pushLog(data);
+  running=false;slide.classList.remove('run');slideTxt.textContent='Slide to Sesh';resetSlide();
+  setState('IDLE');S.temp=72;S.flux=0;S.remaining=S.window;S.hist=[];S.rec=[];
+  syncDial();
 }
 
-function drawLogCanvas(canvas, log) {
-  const dpr = devicePixelRatio;
-  canvas.width  = canvas.offsetWidth * dpr;
-  canvas.height = 52 * dpr;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  const rec = log.record;
-  if (!rec || rec.length < 2) {
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#333';
-    ctx.font = `${10*dpr}px "DM Mono"`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('no data', w/2, h/2);
-    return;
-  }
-
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(0, 0, w, h);
-
-  // Grid
-  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 3; i++) {
-    ctx.beginPath(); ctx.moveTo(0, h*i/3); ctx.lineTo(w, h*i/3); ctx.stroke();
-  }
-
-  const step = w / (rec.length - 1);
-
-  // Temp
-  const tColor = tempToColor(log.temp);
-  ctx.beginPath(); ctx.strokeStyle = tColor; ctx.lineWidth = 1.5;
-  rec.forEach((r, i) => {
-    const x = i * step;
-    const y = h - ((r.t - 70) / (600 - 70)) * h;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  // Flux
-  ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5;
-  rec.forEach((r, i) => {
-    const x = i * step;
-    const y = h - (r.f / 80) * h;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+/* ============ TELEMETRY LOGS ============ */
+const logFeed=document.getElementById('logFeed');
+let currentProfileName='Custom';
+function pushLog(d){
+  const empty=logFeed.querySelector('.empty');if(empty)empty.remove();
+  const t=new Date(d.ts);
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML=`<div class="row1"><span class="ts">${t.toLocaleDateString()} ${t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span><span class="pf">${d.target}°F</span></div>
+    <div class="nm">${d.profile}${d.aborted?' · aborted':''}</div>
+    <canvas width="640" height="140"></canvas>
+    <div class="stats">
+      <div class="stat"><b>${d.peak.toFixed(0)}W</b><span>Peak Flux</span></div>
+      <div class="stat"><b>${d.avg.toFixed(0)}W</b><span>Avg Flux</span></div>
+      <div class="stat"><b>${d.dur.toFixed(0)}s</b><span>Duration</span></div>
+    </div>`;
+  logFeed.prepend(card);
+  drawMini(card.querySelector('canvas'),d.hist);
+}
+function drawMini(cv,hist){
+  const c=cv.getContext('2d'),W=640,H=140;c.clearRect(0,0,W,H);
+  if(!hist.length)return;const sx=W/Math.max(1,hist.length-1);
+  c.lineWidth=2.4;c.strokeStyle=tempColor(hist[hist.length-1].t);c.beginPath();
+  hist.forEach((p,i)=>{const x=i*sx,y=H-tempFrac(p.t)*H;i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
+  c.lineWidth=1.6;c.strokeStyle='#fff';c.beginPath();
+  hist.forEach((p,i)=>{const x=i*sx,y=H-(p.f/80)*H;i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
 }
 
-// Initial empty state
-renderLogs();
-
-// ══════════════════════════════════════════════
-//  PROFILE VAULT
-// ══════════════════════════════════════════════
-const COLOR_HEX = {
-  cyan: '#00d4ff', orange: '#ff6b35', red: '#ff2d55',
-  white: '#f0f0f0', purple: '#bf5af2', green: '#30d158'
+/* ============ PROFILES / VAULT ============ */
+// Factory defaults for each hardware slot. White runs the hottest.
+const FACTORY={
+  blue:{name:'Cyan Cruise',temp:375,time:45,led:'blue',slot:'blue',pulse:'Solid Continuous Burn',curve:'Steady Linear Delivery'},
+  orange:{name:'Amber Arc',temp:430,time:70,led:'orange',slot:'orange',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery'},
+  red:{name:'Crimson Core',temp:490,time:90,led:'red',slot:'red',pulse:'Haptic Pulse Telemetry',curve:'Crescendo Micro-Ramp Step'},
+  white:{name:'Titan Max',temp:545,time:120,led:'white',slot:'white',pulse:'Rotating Orbit Tracking Loop',curve:'Crescendo Micro-Ramp Step'},
 };
-const FACTORY_PRESETS = [
-  { name:'Flavor Chaser', temp:400, time:60, color:'cyan',  anim:'breathe', curve:'steady'    },
-  { name:'Cloud Builder', temp:460, time:90, color:'orange', anim:'wave',   curve:'crescendo' },
-  { name:'Terp Blast',    temp:490, time:45, color:'red',    anim:'pulse',   curve:'crescendo' },
-  { name:'Micro Dose',    temp:370, time:30, color:'white',  anim:'solid',   curve:'steady'    },
+const slotDefaults=()=>JSON.parse(JSON.stringify(FACTORY)); // deep copy on demand
+let presets=[
+  {...FACTORY.blue},{...FACTORY.orange},{...FACTORY.red},{...FACTORY.white}
 ];
+// A few inactive example recipes pre-loaded in the library.
+let vault=[
+  {name:'Morning Microdose',temp:360,time:40,led:'green',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery',slot:''},
+  {name:'Evening Flow',temp:415,time:75,led:'amethyst',pulse:'Rotating Orbit Tracking Loop',curve:'Steady Linear Delivery',slot:''},
+  {name:'Terpene Saver',temp:385,time:55,led:'cyan',pulse:'Solid Continuous Burn',curve:'Crescendo Micro-Ramp Step',slot:''},
+];
+const presetList=document.getElementById('presetList'),vaultList=document.getElementById('vaultList');
 
-function renderVault() {
-  renderPresets();
-  renderVaultList();
+function loadProfile(p){
+  target=p.temp;windowS=p.time;currentProfileName=p.name;
+  setCurve(p.curve&&p.curve.indexOf('Crescendo')>-1?'crescendo':'steady');
+  syncDial();
+  goto(1);
 }
-
-function renderPresets() {
-  const el = document.getElementById('presets-list');
-  el.innerHTML = '';
-  presets.forEach((p, i) => {
-    el.appendChild(makeProfileRow(p, true, i));
-  });
+function renderProfiles(){
+  presetList.innerHTML='';
+  presets.forEach((p,i)=>presetList.appendChild(makeRow(p,'preset',i)));
+  vaultList.innerHTML='';
+  if(!vault.length){vaultList.innerHTML='<div class="empty" style="margin-top:10px;">Library empty.</div>';}
+  else vault.forEach((p,i)=>vaultList.appendChild(makeRow(p,'vault',i)));
 }
+function makeRow(p,type,i){
+  const row=document.createElement('div');row.className='prow'+(type==='vault'?' vaultitem':'');
+  const dotCls=p.led||p.slot||'white';
+  const curveLabel=p.curve&&p.curve.indexOf('Crescendo')>-1?'Crescendo':'Steady';
+  const slotNum={blue:1,orange:2,red:3,white:4};
+  const badge=type==='preset'
+    ? `<div class="slotbadge ${p.slot}">Slot ${slotNum[p.slot]}</div>`
+    : '';
+  row.innerHTML=`<div class="wrench">🔧</div>
+    <div class="content"><div class="dot ${dotCls}"></div>
+    <div class="pinfo"><b>${p.name}</b><span>${p.temp}°F · ${p.time}s · ${curveLabel}</span></div>${badge}</div>`;
+  const content=row.querySelector('.content');
+  // tap to load
+  content.addEventListener('click',e=>{if(row.dataset.open==='1'){return;}loadProfile(p);});
+  // swipe
+  let sx=null,open=false;
+  const begin=x=>{sx=x;closeOthers(row);};
+  const moveR=x=>{if(sx===null)return;let dx=x-sx;dx=Math.max(-75,Math.min(0,dx));content.style.transform=`translateX(${dx}px)`;};
+  const endR=x=>{if(sx===null)return;const dx=x-sx;open=dx<-38;content.style.transform=`translateX(${open?-75:0}px)`;row.dataset.open=open?'1':'0';sx=null;};
+  content.addEventListener('touchstart',e=>begin(e.touches[0].clientX),{passive:true});
+  content.addEventListener('touchmove',e=>moveR(e.touches[0].clientX),{passive:true});
+  content.addEventListener('touchend',e=>endR(e.changedTouches[0].clientX));
+  content.addEventListener('mousedown',e=>begin(e.clientX));
+  content.addEventListener('mousemove',e=>{if(sx!==null)moveR(e.clientX);});
+  content.addEventListener('mouseup',e=>endR(e.clientX));
+  row.querySelector('.wrench').addEventListener('click',()=>{openConfig(type,i);});
+  return row;
+}
+function closeOthers(except){
+  document.querySelectorAll('.prow').forEach(r=>{if(r!==except){const c=r.querySelector('.content');if(c)c.style.transform='translateX(0)';r.dataset.open='0';}});
+}
+renderProfiles();
 
-function renderVaultList() {
-  const el = document.getElementById('vault-list');
-  el.innerHTML = '';
-  if (vault.length === 0) {
-    el.innerHTML = '<div style="color:#333;font-size:11px;text-align:center;padding:20px 0;letter-spacing:.08em;">Empty vault — save a custom profile</div>';
-    return;
+/* ============ CONFIG MODAL ============ */
+const cfgModal=document.getElementById('cfgModal');
+const f={name:'f_name',temp:'f_temp',time:'f_time',led:'f_led',pulse:'f_pulse',curve:'f_curve',slot:'f_slot'};
+const F={};for(const k in f)F[k]=document.getElementById(f[k]);
+const cfgTitle=document.getElementById('cfgTitle'),cfgDel=document.getElementById('cfgDel');
+let editing=null; // {type,i} or null
+F.temp.addEventListener('input',()=>document.getElementById('f_tempval').textContent=F.temp.value+'°F');
+F.time.addEventListener('input',()=>document.getElementById('f_timeval').textContent=F.time.value+'s');
+function openConfig(type,i){
+  closeOthers(null);
+  if(type==null){editing=null;cfgTitle.textContent='New Profile';
+    F.name.value='';F.temp.value=450;F.time.value=60;F.led.value='cyan';F.pulse.selectedIndex=0;F.curve.selectedIndex=0;F.slot.value='';
+    cfgDel.style.display='none';}
+  else{const p=(type==='preset'?presets:vault)[i];editing={type,i};
+    cfgTitle.textContent='Edit Profile';
+    F.name.value=p.name;F.temp.value=p.temp;F.time.value=p.time;
+    F.led.value=p.led||'cyan';F.slot.value=p.slot||'';
+    F.pulse.value=p.pulse||F.pulse.options[0].value;F.curve.value=p.curve||F.curve.options[0].value;
+    if(type==='preset'){F.slot.value=p.slot;cfgDel.textContent='Remove & Reset Slot';cfgDel.style.display='block';}
+    else{cfgDel.textContent='Delete';cfgDel.style.display='block';}}
+  document.getElementById('f_tempval').textContent=F.temp.value+'°F';
+  document.getElementById('f_timeval').textContent=F.time.value+'s';
+  cfgModal.classList.add('open');
+}
+document.getElementById('addBtn').addEventListener('click',()=>openConfig(null));
+document.getElementById('cfgCancel').addEventListener('click',()=>cfgModal.classList.remove('open'));
+document.getElementById('cfgSave').addEventListener('click',()=>{
+  const p={name:F.name.value||'Untitled',temp:+F.temp.value,time:+F.time.value,
+    led:F.led.value,pulse:F.pulse.value,curve:F.curve.value,slot:F.slot.value};
+  if(editing&&editing.type==='preset'){
+    // editing an on-device preset: slot stays fixed to that row
+    p.slot=presets[editing.i].slot;
+    presets[editing.i]=p;
+  }else if(editing&&editing.type==='vault'){
+    if(p.slot){ // user assigned this library profile to a device slot
+      const idx=['blue','orange','red','white'].indexOf(p.slot);
+      presets[idx]=p; vault.splice(editing.i,1);
+    }else{ vault[editing.i]=p; }
+  }else{ // brand-new profile
+    if(p.slot){
+      const idx=['blue','orange','red','white'].indexOf(p.slot);
+      presets[idx]=p;
+    }else{ vault.push(p); }
   }
-  vault.forEach(p => {
-    el.appendChild(makeProfileRow(p, false));
-  });
-}
-
-function makeProfileRow(p, isPreset, slotIdx) {
-  const wrap  = document.createElement('div');
-  wrap.className = 'profile-row-wrap';
-
-  const colorHex = COLOR_HEX[p.color] || '#888';
-
-  // Action (wrench)
-  const action = document.createElement('div');
-  action.className = 'profile-row-action';
-  action.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  action.addEventListener('click', e => {
-    e.stopPropagation();
-    openModal('edit', p, isPreset, slotIdx);
-    closeFrontSwipe(front);
-  });
-  wrap.appendChild(action);
-
-  // Front
-  const front = document.createElement('div');
-  front.className = 'profile-row-front';
-  front.innerHTML = `
-    <div class="profile-color-dot" style="background:${colorHex}"></div>
-    <div class="profile-info">
-      <div class="profile-name">${p.name}</div>
-      <div class="profile-meta">${p.temp}°F · ${p.time}s · ${p.curve}</div>
-    </div>
-    ${isPreset ? `<div class="profile-slot-badge">Slot ${(slotIdx||0)+1}</div>` : ''}
-  `;
-  front.addEventListener('click', () => {
-    loadProfile(p);
-    closeFrontSwipe(front);
-  });
-
-  // Swipe left to reveal wrench
-  let swX = null, swOffX = 0, swOpen = false;
-  front.addEventListener('touchstart', e => {
-    swX = e.touches[0].clientX;
-    swOffX = swOpen ? -56 : 0;
-    front.style.transition = 'none';
-  }, { passive: true });
-  front.addEventListener('touchmove', e => {
-    e.stopPropagation();
-    const dx = e.touches[0].clientX - swX;
-    const newX = Math.max(-56, Math.min(0, swOffX + dx));
-    front.style.transform = `translateX(${newX}px)`;
-    action.style.transform = `translateX(${newX + 56}px)`;
-  }, { passive: true });
-  front.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - swX;
-    const threshold = swOpen ? 20 : -30;
-    const shouldOpen = dx < threshold || (swOpen && dx > -20);
-    if (dx < -30) { openFrontSwipe(front, action); swOpen = true; }
-    else if (dx > 20 && swOpen) { closeFrontSwipe(front, action); swOpen = false; }
-    else { if (swOpen) openFrontSwipe(front, action); else closeFrontSwipe(front, action); }
-  });
-
-  // Mouse drag
-  let mSwX = null, mSwOff = 0, mSwOpen = false;
-  front.addEventListener('mousedown', e => { mSwX = e.clientX; mSwOff = mSwOpen ? -56 : 0; });
-  document.addEventListener('mousemove', e => {
-    if (mSwX === null) return;
-    const dx = e.clientX - mSwX;
-    const newX = Math.max(-56, Math.min(0, mSwOff + dx));
-    front.style.transform = `translateX(${newX}px)`;
-    action.style.transform = `translateX(${newX + 56}px)`;
-  });
-  document.addEventListener('mouseup', e => {
-    if (mSwX === null) return;
-    const dx = e.clientX - mSwX;
-    if (dx < -30) { openFrontSwipe(front, action); mSwOpen = true; }
-    else if (dx > 20 && mSwOpen) { closeFrontSwipe(front, action); mSwOpen = false; }
-    else { if (mSwOpen) openFrontSwipe(front, action); else closeFrontSwipe(front, action); }
-    mSwX = null;
-  });
-
-  wrap.appendChild(front);
-  return wrap;
-}
-
-function openFrontSwipe(front, action) {
-  front.style.transition  = 'transform 0.25s ease';
-  action.style.transition = 'transform 0.25s ease';
-  front.style.transform   = 'translateX(-56px)';
-  action.style.transform  = 'translateX(0px)';
-}
-function closeFrontSwipe(front, action) {
-  if (!front) return;
-  front.style.transition  = 'transform 0.25s ease';
-  if (action) action.style.transition = 'transform 0.25s ease';
-  front.style.transform   = 'translateX(0)';
-  if (action) action.style.transform  = 'translateX(56px)';
-}
-
-function loadProfile(p) {
-  targetTemp = p.temp;
-  sessionTime = p.time;
-  sessionSecondsLeft = p.time;
-  sessionSecondsTotal = p.time;
-  sliderTemp.value = p.temp;
-  sliderTime.value = p.time;
-  updateDialDisplay();
-  drawDial();
-  goToPage(1);
-}
-
-renderVault();
-
-// ══════════════════════════════════════════════
-//  CONFIG MODAL
-// ══════════════════════════════════════════════
-const modalOverlay = document.getElementById('modal-overlay');
-const modalSheet   = document.getElementById('modal-sheet');
-const modalTitle   = document.getElementById('modal-title');
-const modalSave    = document.getElementById('modal-save');
-const modalDelete  = document.getElementById('modal-delete');
-
-let modalIsPreset = false;
-let modalSlotIdx  = null;
-
-function openModal(mode, profile, isPreset, slotIdx) {
-  modalMode = mode;
-  modalIsPreset = isPreset || false;
-  modalSlotIdx  = slotIdx  ?? null;
-
-  if (mode === 'new') {
-    modalEditId = null;
-    modalTitle.textContent = 'New Profile';
-    document.getElementById('modal-name').value = '';
-    document.getElementById('modal-temp').value = 420;
-    document.getElementById('modal-time').value = 45;
-    document.getElementById('modal-slot').value = 'none';
-    document.getElementById('modal-anim').value = 'solid';
-    setModalColor('cyan');
-    setModalCurve('steady');
-    modalDelete.style.display = 'none';
-  } else {
-    modalEditId = profile.id;
-    modalTitle.textContent = isPreset ? 'Edit Preset' : 'Edit Profile';
-    document.getElementById('modal-name').value = profile.name;
-    document.getElementById('modal-temp').value = profile.temp;
-    document.getElementById('modal-time').value = profile.time;
-    document.getElementById('modal-slot').value = profile.slot ?? 'none';
-    document.getElementById('modal-anim').value = profile.anim || 'solid';
-    setModalColor(profile.color || 'cyan');
-    setModalCurve(profile.curve || 'steady');
-    modalDelete.textContent = isPreset ? 'Remove & Reset Slot' : 'Delete';
-    modalDelete.style.display = 'block';
-  }
-
-  modalOverlay.classList.add('open');
-  modalSheet.classList.add('open');
-}
-
-function closeModal() {
-  modalOverlay.classList.remove('open');
-  modalSheet.classList.remove('open');
-}
-
-modalOverlay.addEventListener('click', closeModal);
-
-document.getElementById('add-profile-btn').addEventListener('click', () => openModal('new'));
-
-modalSave.addEventListener('click', () => {
-  const name  = document.getElementById('modal-name').value.trim() || 'Untitled';
-  const temp  = Math.min(550, Math.max(350, +document.getElementById('modal-temp').value || 420));
-  const time  = Math.min(120, Math.max(30,  +document.getElementById('modal-time').value || 45));
-  const anim  = document.getElementById('modal-anim').value;
-  const slot  = document.getElementById('modal-slot').value;
-
-  const obj = { name, temp, time, color: modalSelectedColor, anim, curve: modalSelectedCurve, slot };
-
-  if (modalMode === 'new') {
-    obj.id = 'v' + (nextId++);
-    // If slot chosen, assign to preset
-    if (slot !== 'none') {
-      const si = +slot;
-      vault.push({ ...presets[si], id: presets[si].id+'_vault' });
-      presets[si] = { ...obj, slot: si, isFactory: false };
-    } else {
-      vault.push(obj);
-    }
-  } else {
-    // Edit
-    if (modalIsPreset) {
-      const si = modalSlotIdx;
-      presets[si] = { ...presets[si], ...obj, slot: si };
-    } else {
-      const vi = vault.findIndex(v => v.id === modalEditId);
-      if (vi >= 0) vault[vi] = { ...vault[vi], ...obj };
-    }
-  }
-
-  renderVault();
-  closeModal();
+  cfgModal.classList.remove('open');renderProfiles();
+});
+cfgDel.addEventListener('click',()=>{
+  if(editing&&editing.type==='preset'){
+    const slot=presets[editing.i].slot;
+    // move custom recipe down to the library, restore factory default to the slot
+    vault.push({...presets[editing.i],slot:''});
+    presets[editing.i]={...FACTORY[slot]};
+  }else if(editing&&editing.type==='vault'){vault.splice(editing.i,1);}
+  cfgModal.classList.remove('open');renderProfiles();
 });
 
-modalDelete.addEventListener('click', () => {
-  if (modalMode !== 'edit') return;
-  if (modalIsPreset) {
-    // Reset to factory, move custom to vault
-    const si = modalSlotIdx;
-    const old = presets[si];
-    if (!old.isFactory) vault.push({ ...old, slot: 'none', id: 'v'+(nextId++) });
-    const f = FACTORY_PRESETS[si];
-    presets[si] = { ...f, id:'p'+si, slot:si, isFactory:true };
-  } else {
-    const vi = vault.findIndex(v => v.id === modalEditId);
-    if (vi >= 0) vault.splice(vi, 1);
-  }
-  renderVault();
-  closeModal();
-});
+/* ============ SETTINGS MODAL ============ */
+const setModal=document.getElementById('setModal');
+document.getElementById('gearBtn').addEventListener('click',()=>setModal.classList.add('open'));
+document.getElementById('setBack').addEventListener('click',()=>setModal.classList.remove('open'));
+document.querySelectorAll('.srow').forEach(r=>r.addEventListener('click',()=>alert(r.dataset.alert)));
 
-// Color swatches
-document.getElementById('modal-color-row').addEventListener('click', e => {
-  const sw = e.target.closest('.color-swatch');
-  if (!sw) return;
-  setModalColor(sw.dataset.color);
-});
-function setModalColor(c) {
-  modalSelectedColor = c;
-  document.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === c));
-}
-
-// Curve btns
-document.querySelectorAll('.curve-btn').forEach(btn => btn.addEventListener('click', () => setModalCurve(btn.dataset.curve)));
-function setModalCurve(c) {
-  modalSelectedCurve = c;
-  document.querySelectorAll('.curve-btn').forEach(b => b.classList.toggle('selected', b.dataset.curve === c));
-}
-
-// ══════════════════════════════════════════════
-//  RESIZE & INIT
-// ══════════════════════════════════════════════
-window.addEventListener('resize', () => {
-  resizeDial();
-  resizeTele();
-  goToPage(currentPage, false);
-});
-
-resizeDial();
-resizeTele();
-updateDialDisplay();
-drawDial();
-goToPage(1, false); // Start on Dashboard
+/* ============ INIT ============ */
+syncDial();
 </script>
 </body>
 </html>
