@@ -71,7 +71,19 @@
   .empty{color:var(--grey);text-align:center;margin-top:40px;font-size:13px;}
   /* ---------- Dashboard ---------- */
   .dash{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:10px;}
-  .dialwrap{position:relative;width:270px;height:270px;}
+  .dialwrap{position:relative;width:270px;height:270px;border-radius:50%;transition:box-shadow .4s;}
+  /* live-session breathing glow around the whole dial */
+  .dialwrap.live{animation:dialBreath 2.4s ease-in-out infinite;}
+  @keyframes dialBreath{
+    0%,100%{box-shadow:0 0 0px 0px rgba(63,224,224,0);}
+    50%{box-shadow:0 0 38px 4px rgba(63,224,224,.22);}
+  }
+  /* when drawing, the breath turns warm and quickens */
+  .dialwrap.live.drawing{animation:dialBreathHot 1s ease-in-out infinite;}
+  @keyframes dialBreathHot{
+    0%,100%{box-shadow:0 0 14px 1px rgba(255,70,70,.25);}
+    50%{box-shadow:0 0 46px 7px rgba(255,70,70,.5);}
+  }
   .dialwrap canvas{position:absolute;inset:0;cursor:grab;touch-action:none;}
   .hub{
     position:absolute;top:65px;left:65px;width:140px;height:140px;border-radius:50%;
@@ -137,6 +149,11 @@
   .slide.run .thumb .chev svg{animation:none;}
   .slide.run .thumb{background:radial-gradient(circle at 38% 32%,#ff8a8a,var(--red) 45%,#9c1f1f);color:#fff;box-shadow:0 4px 18px rgba(255,70,70,.45), inset 0 1px 2px rgba(255,255,255,.4);}
   .slide.run .fill{background:linear-gradient(90deg,rgba(255,70,70,.3),rgba(255,70,70,.05));width:100%;}
+  .slide.run{animation:slideLive 1.6s ease-in-out infinite;border-color:rgba(255,70,70,.4);}
+  @keyframes slideLive{
+    0%,100%{box-shadow:0 0 0px 0px rgba(255,70,70,0);}
+    50%{box-shadow:0 0 26px 2px rgba(255,70,70,.35);}
+  }
   /* ---------- Vault ---------- */
   .seclbl{font-family:var(--mono);font-size:10px;color:var(--grey);letter-spacing:.12em;text-transform:uppercase;margin:6px 4px 10px;}
   .prow{
@@ -532,6 +549,7 @@ function drawGraph(){
 
 /* ============ HUB / STATE MACHINE ============ */
 const hub=document.getElementById('hub'),hubState=document.getElementById('hubState');
+const dialWrap=document.querySelector('.dialwrap');
 function setState(s){
   S.state=s;hub.classList.remove('pulse','draw');
   if(s==='IDLE'){hubState.textContent='READY';}
@@ -539,6 +557,8 @@ function setState(s){
   else if(s==='HOLDING'){hubState.textContent='READY';hub.classList.add('pulse');}
   else if(s==='EXTRACTING'){hubState.textContent='DRAWING';hub.classList.add('draw');}
   else if(s==='PAUSED_EXTRACTING'){hubState.textContent='READY';hub.classList.add('pulse');}
+  // warm/quick breath only while actively drawing
+  dialWrap.classList.toggle('drawing',s==='EXTRACTING');
 }
 function rnd(j){return (Math.random()-0.5)*j;}
 function approach(cur,goal,rate){return cur+(goal-cur)*rate;}
@@ -627,6 +647,7 @@ function lockSlideRight(){const r=slide.getBoundingClientRect();thumb.style.left
 
 function startSession(){
   running=true;slide.classList.add('run');slideTxt.textContent='Tap to Abort';lockSlideRight();
+  dialWrap.classList.add('live');
   S.peak=0;S.sum=0;S.n=0;S.remaining=S.window;S.rec=[];S.inhale=0;
   setState('MELTING');
 }
@@ -644,6 +665,7 @@ function completeSession(aborted){
     profile:currentProfileName,hist:downsample(S.rec,120),aborted};
   if(S.rec.length>3)pushLog(data);
   running=false;slide.classList.remove('run');slideTxt.textContent='Slide to Sesh';resetSlide();
+  dialWrap.classList.remove('live','drawing');
   setState('IDLE');S.temp=72;S.flux=0;S.remaining=S.window;S.hist=[];S.rec=[];
   syncDial();
 }
