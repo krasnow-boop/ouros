@@ -18,18 +18,23 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
-    width:100vw;height:100dvh;overflow:hidden;background:var(--bg0);
+    width:100vw;height:100dvh;overflow:hidden;background:#000;
     color:var(--txt);font-family:var(--sans);
     overscroll-behavior:none;
   }
-  body{position:fixed;inset:0;}
+  body{position:fixed;inset:0;display:flex;justify-content:center;}
+  /* Centered app frame — constrains width on desktop so it reads like a phone */
+  #app{
+    position:relative;width:100%;max-width:440px;height:100dvh;overflow:hidden;
+    background:var(--bg0);box-shadow:0 0 60px rgba(0,0,0,.6);
+  }
   #scroller{
-    display:flex;width:300vw;height:100dvh;
+    display:flex;width:300%;height:100dvh;
     transition:transform .42s cubic-bezier(.22,.61,.36,1);
     will-change:transform;
   }
   .surface{
-    width:100vw;height:100dvh;position:relative;flex-shrink:0;
+    width:33.3333%;height:100dvh;position:relative;flex-shrink:0;
     display:flex;flex-direction:column;background:#0a0a0a !important;
   }
   /* ---------- Header ---------- */
@@ -54,6 +59,20 @@
   .body{flex:1;overflow-y:auto;overflow-x:hidden;padding:66px 16px 96px;-webkit-overflow-scrolling:touch;background:#0a0a0a !important;}
   .bodydash{display:flex;flex-direction:column;justify-content:center;}
   .body::-webkit-scrollbar{display:none;}
+  /* ---------- History stats header ---------- */
+  .statshero{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px 18px;margin-bottom:16px;}
+  .statshero .hero{text-align:center;margin-bottom:16px;}
+  .statshero .heronum{font-family:var(--mono);font-size:52px;font-weight:700;line-height:1;
+    letter-spacing:-.03em;color:var(--cyan);}
+  .statshero .herolbl{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--grey);margin-top:6px;}
+  .statshero .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;
+    border-top:1px solid var(--line);padding-top:14px;}
+  .statshero .stat{text-align:center;}
+  .statshero .stat b{display:block;font-family:var(--mono);font-size:16px;font-weight:700;}
+  .statshero .stat span{font-size:8px;color:var(--grey);text-transform:uppercase;
+    letter-spacing:.06em;font-family:var(--mono);display:block;margin-top:3px;}
   /* ---------- Telemetry cards ---------- */
   .card{
     background:var(--card);border:1px solid var(--line);border-radius:16px;
@@ -71,8 +90,10 @@
   .empty{color:var(--grey);text-align:center;margin-top:40px;font-size:13px;}
   /* ---------- Dashboard ---------- */
   .dash{display:flex;flex-direction:column;align-items:center;gap:22px;padding-top:10px;}
-  .dialwrap{position:relative;width:270px;height:270px;border-radius:50%;}
-  .dialwrap canvas{position:absolute;inset:0;cursor:grab;touch-action:none;}
+  .dialwrap{position:relative;width:270px;height:270px;}
+  .dialwrap #dial{position:absolute;inset:0;cursor:grab;touch-action:none;z-index:2;}
+  .dialwrap #glowCanvas{position:absolute;top:50%;left:50%;width:420px;height:420px;
+    transform:translate(-50%,-50%);pointer-events:none;z-index:1;}
   .hub{
     position:absolute;top:65px;left:65px;width:140px;height:140px;border-radius:50%;
     background:radial-gradient(circle at 50% 45%,#101010 0%,#0a0a0a 70%);
@@ -88,8 +109,13 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .lblrow{font-family:var(--mono);display:flex;justify-content:space-between;width:100%;font-size:9px;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;}
   .graphwrap{position:relative;width:100%;}
+  .modrow{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px;}
+  .leddisc{background:none;border:none;padding:0;cursor:pointer;display:grid;place-items:center;}
+  .leddisc .disc{width:30px;height:30px;box-shadow:0 0 8px rgba(0,0,0,.5), inset 0 0 5px rgba(0,0,0,.45);
+    transition:transform .15s;}
+  .leddisc:active .disc{transform:scale(.9);}
   .curvetoggle{
-    position:relative;display:inline-flex;align-self:center;gap:0;margin-top:4px;
+    position:relative;display:inline-flex;align-self:center;gap:0;margin-top:0;
     background:transparent;border:none;border-radius:999px;padding:0;
   }
   .curvetoggle .pill{
@@ -149,6 +175,7 @@
     display:flex;align-items:center;gap:12px;transition:transform .25s ease;cursor:pointer;
   }
   .prow .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  .prow .dot.disc{width:20px;height:20px;box-shadow:0 0 6px rgba(0,0,0,.5);}
   .prow .pinfo{flex:1;}
   .prow .pinfo b{font-size:15px;font-weight:600;display:block;}
   .prow .pinfo span{font-family:var(--mono);font-size:11px;color:var(--grey);letter-spacing:-.01em;}
@@ -173,7 +200,7 @@
   .vaultitem .content{cursor:pointer;}
   /* ---------- Swipe zone ---------- */
   .swipezone{
-    position:fixed;bottom:0;left:0;right:0;height:80px;z-index:40;
+    position:absolute;bottom:0;left:0;right:0;height:80px;z-index:40;
     background:linear-gradient(0deg,var(--bg0) 30%,transparent);
     display:flex;align-items:center;justify-content:center;gap:12px;
     touch-action:none;
@@ -183,7 +210,7 @@
   .swipehint{position:absolute;bottom:6px;font-size:8px;color:#3a3a3e;letter-spacing:.2em;text-transform:uppercase;}
   /* ---------- Modals ---------- */
   .modal{
-    position:fixed;left:0;right:0;bottom:0;height:100dvh;z-index:60;
+    position:absolute;left:0;right:0;bottom:0;height:100dvh;z-index:60;
     background:var(--bg1);transform:translateY(100%);transition:transform .4s cubic-bezier(.22,.61,.36,1);
     display:flex;flex-direction:column;
   }
@@ -205,6 +232,43 @@
   .field select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%238a8a90' stroke-width='2'><path d='M2 4l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 14px center;}
   .field .rngval{font-family:var(--mono);float:right;font-size:13px;font-weight:700;color:var(--txt);}
   .field input[type=range]{width:100%;margin-top:10px;accent-color:var(--cyan);}
+  /* ---- LED field + disc swatch + picker ---- */
+  .disc{display:inline-block;width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    box-shadow:0 0 6px rgba(0,0,0,.5), inset 0 0 4px rgba(0,0,0,.4);}
+  .ledfield{width:100%;display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--txt);
+    font-size:14px;font-family:inherit;cursor:pointer;text-align:left;}
+  .ledfield .caret{margin-left:auto;color:var(--grey);font-size:16px;}
+  .ledgroup{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:.14em;
+    text-transform:uppercase;margin:18px 4px 8px;}
+  .ledopt{display:flex;align-items:center;gap:14px;padding:12px 8px;border-radius:10px;cursor:pointer;}
+  .ledopt:active{background:var(--card);}
+  .ledopt .disc{width:32px;height:32px;}
+  .ledopt .lname{font-size:15px;font-weight:600;}
+  .ledopt .lsub{font-size:10px;color:var(--grey);font-family:var(--mono);letter-spacing:.05em;}
+  .ledopt.sel{background:rgba(63,224,224,.08);box-shadow:0 0 0 1px rgba(63,224,224,.3) inset;}
+  .ledopt .chk{margin-left:auto;color:var(--cyan);font-size:14px;opacity:0;}
+  .ledopt.sel .chk{opacity:1;}
+  .ledtabs{display:flex;gap:6px;padding:0 16px 4px;border-bottom:1px solid var(--line);}
+  .ledtab{flex:1;padding:12px;background:none;border:none;color:var(--grey);font-family:var(--mono);
+    font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    border-bottom:2px solid transparent;}
+  .ledtab.on{color:var(--cyan);border-bottom-color:var(--cyan);}
+  .effopt{display:flex;align-items:center;gap:16px;padding:12px 8px;border-radius:10px;cursor:pointer;}
+  .effopt:active{background:var(--card);}
+  .effopt canvas{width:48px;height:48px;flex-shrink:0;}
+  .effopt .ename{font-size:15px;font-weight:600;}
+  .effopt .esub{font-size:10px;color:var(--grey);font-family:var(--mono);letter-spacing:.04em;}
+  .effopt .einfo{flex:1;}
+  .swappill{display:inline-block;margin-top:7px;padding:4px 10px;border-radius:999px;
+    background:transparent;border:1px solid var(--line);color:var(--grey);
+    font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;cursor:pointer;}
+  .swappill.on{background:rgba(63,224,224,.14);border-color:var(--cyan);color:var(--cyan);}
+  .swappill.off{opacity:.3;cursor:default;} /* inert for single-gas colors */
+  .effopt.sel{background:rgba(63,224,224,.08);box-shadow:0 0 0 1px rgba(63,224,224,.3) inset;}
+  .effopt .chk{margin-left:auto;color:var(--cyan);font-size:14px;opacity:0;}
+  .effopt.sel .chk{opacity:1;}
   .mbtns{display:flex;gap:10px;margin-top:10px;}
   .btn{flex:1;padding:15px;border-radius:12px;border:none;font-size:13px;font-weight:600;letter-spacing:.08em;cursor:pointer;font-family:inherit;text-transform:uppercase;}
   .btn.save{background:var(--cyan);color:#04201f;}
@@ -220,6 +284,7 @@
 </head>
 <body>
 
+<div id="app">
 <div id="scroller">
   <!-- ============ SURFACE 1: TELEMETRY ============ -->
   <section class="surface">
@@ -228,8 +293,22 @@
       <div class="title">Telemetry Logs</div>
       <div class="side r"><span class="batt">100%</span><span id="battIco1"></span></div>
     </div>
-    <div class="body" id="logFeed">
-      <div class="empty">No sessions logged yet. Run a session on the dashboard.</div>
+    <div class="body" id="histBody">
+      <div class="statshero" id="statsHero">
+        <div class="hero">
+          <div class="heronum" id="stPuffs">0</div>
+          <div class="herolbl">Total Puffs</div>
+        </div>
+        <div class="statgrid">
+          <div class="stat"><b id="stSessions">0</b><span>Sessions</span></div>
+          <div class="stat"><b id="stPPS">0</b><span>Puffs / Sesh</span></div>
+          <div class="stat"><b id="stLen">0s</b><span>Avg Length</span></div>
+          <div class="stat"><b id="stDur">0.0s</b><span>Avg Puff</span></div>
+        </div>
+      </div>
+      <div id="logFeed">
+        <div class="empty">No sessions logged yet. Run a session on the dashboard.</div>
+      </div>
     </div>
   </section>
 
@@ -243,6 +322,7 @@
     <div class="body bodydash">
       <div class="dash">
         <div class="dialwrap">
+          <canvas id="glowCanvas" width="620" height="620"></canvas>
           <canvas id="dial" width="540" height="540" style="width:270px;height:270px;"></canvas>
           <div class="hub" id="hub">
             <div>
@@ -253,10 +333,13 @@
           </div>
         </div>
 
-        <div class="curvetoggle" id="curveToggle">
-          <div class="pill" id="curvePill"></div>
-          <button class="seg on" data-curve="steady">Steady</button>
-          <button class="seg" data-curve="crescendo">Crescendo</button>
+        <div class="modrow">
+          <button class="leddisc" id="liveLed" title="LED signature"><span class="disc" id="liveLedDisc"></span></button>
+          <div class="curvetoggle" id="curveToggle">
+            <div class="pill" id="curvePill"></div>
+            <button class="seg on" data-curve="steady">Steady</button>
+            <button class="seg" data-curve="crescendo">Crescendo</button>
+          </div>
         </div>
 
         <div style="width:100%;">
@@ -315,10 +398,9 @@
     <div class="field"><label>Profile Identifier Label</label><input type="text" id="f_name" placeholder="Custom Profile"></div>
     <div class="field"><label>Temperature Threshold <span class="rngval" id="f_tempval">450°F</span></label><input type="range" id="f_temp" min="350" max="550" value="450"></div>
     <div class="field"><label>Session Window Duration <span class="rngval" id="f_timeval">60s</span></label><input type="range" id="f_time" min="30" max="120" value="60"></div>
-    <div class="field"><label>LED Identification Tint</label><select id="f_led">
-      <option value="cyan">Ion Cyan Accent</option><option value="amethyst">Deep Amethyst Orchid</option>
-      <option value="red">Crimson Red Fury</option><option value="green">Emerald Sativa Green</option>
-      <option value="white">Raw Titanium White</option></select></div>
+    <div class="field"><label>LED Identification Tint</label>
+      <button type="button" class="ledfield" id="f_led"><span class="disc" id="f_ledDisc"></span><span id="f_ledLabel">Thermal</span><span class="caret">⌄</span></button>
+    </div>
     <div class="field"><label>LED Pulse Frequency Profile</label><select id="f_pulse">
       <option>Solid Continuous Burn</option><option>Slow Breathing Thermal Wave</option>
       <option>Rotating Orbit Tracking Loop</option><option>Haptic Pulse Telemetry</option></select></div>
@@ -353,6 +435,22 @@
   </div>
 </div>
 
+<!-- LED color picker (shared by profile editor + dashboard live disc) -->
+<div class="modal" id="ledModal">
+  <div class="mhead">
+    <button class="closeb" id="ledClose">Done</button>
+    <h2>LED Signature</h2>
+    <span style="width:54px;"></span>
+  </div>
+  <div class="ledtabs">
+    <button class="ledtab on" data-tab="color">Color</button>
+    <button class="ledtab" data-tab="effect">Effect</button>
+  </div>
+  <div class="mbody" id="ledList"></div>
+  <div class="mbody" id="effectList" style="display:none;"></div>
+</div>
+</div><!-- /#app -->
+
 <script>
 /* ============ ICONS ============ */
 const wifiSvg='<svg width="18" height="14" viewBox="0 0 18 14" fill="none"><path d="M1 4.5C5.5 0.5 12.5 0.5 17 4.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M4 7.5C6.8 5 11.2 5 14 7.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="11.5" r="1.6" fill="white"/></svg>';
@@ -364,16 +462,20 @@ document.querySelectorAll('#battIco1,#battIco2').forEach(e=>e.innerHTML=battSvg)
 /* ============ NAV ============ */
 const scroller=document.getElementById('scroller');
 let page=1;
-function goto(p){page=Math.max(0,Math.min(2,p));scroller.style.transform=`translateX(${-page*100}vw)`;
+function goto(p){page=Math.max(0,Math.min(2,p));scroller.style.transform=`translateX(${-page*33.3333}%)`;
   document.querySelectorAll('.dot-pg').forEach((d,i)=>d.classList.toggle('on',i===page));}
 goto(1);
-(function(){const z=document.getElementById('swipezone');let sx=null;
-  const start=x=>sx=x,move=()=>{},end=x=>{if(sx===null)return;const dx=x-sx;if(Math.abs(dx)>40)goto(page+(dx<0?1:-1));sx=null;};
+(function(){const z=document.getElementById('swipezone');let sx=null,down=false;
+  const start=x=>{sx=x;down=true;},
+        end=x=>{if(sx===null){down=false;return;}const dx=x-sx;if(Math.abs(dx)>30)goto(page+(dx<0?1:-1));sx=null;down=false;};
   z.addEventListener('touchstart',e=>start(e.touches[0].clientX),{passive:true});
   z.addEventListener('touchend',e=>end(e.changedTouches[0].clientX));
-  z.addEventListener('mousedown',e=>start(e.clientX));
-  window.addEventListener('mouseup',e=>{if(sx!==null)end(e.clientX);});
+  z.addEventListener('mousedown',e=>{e.preventDefault();start(e.clientX);});
+  window.addEventListener('mousemove',e=>{if(down)e.preventDefault();});
+  window.addEventListener('mouseup',e=>{if(down)end(e.clientX);});
   document.querySelectorAll('.dot-pg').forEach(d=>d.addEventListener('click',()=>goto(+d.dataset.i)));
+  // desktop: arrow keys navigate
+  window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')goto(page-1);else if(e.key==='ArrowRight')goto(page+1);});
 })();
 
 /* ============ COLOR CALC ============ */
@@ -418,10 +520,89 @@ function tempColor(t){
   return `rgb(${m[0]},${m[1]},${m[2]})`;
 }
 
+/* ============ LED CATALOG ============ */
+// Each option: id, label, category, and `grad` = ordered CSS color stops for a
+// conic gradient (the LED ring sweep). `thermal` is special — its color tracks
+// live temperature instead of being fixed. `solid` true = near-uniform glow.
+const LED_CATALOG=[
+  {id:'thermal', label:'Thermal', cat:'Reactive', thermal:true,
+   grad:['#3fb0cf','#e0a85f','#f0903b','#f02e27','#ffffff']}, // preview = heat ramp
+  // --- Singles (noble + honorary glow gases) ---
+  {id:'helium',   label:'Helium',   cat:'Single', grad:['#ffd9b0','#ff9ec4','#fff0e0']},
+  {id:'neon',     label:'Neon',     cat:'Single', solid:true, grad:['#ff4d1a','#ff6a2b','#ff4d1a']},
+  {id:'argon',    label:'Argon',    cat:'Single', grad:['#b98cff','#6a5bd0','#8f7be8']},
+  {id:'krypton',  label:'Krypton',  cat:'Single', grad:['#cfe6ff','#9fb6a8','#d8e0dc']},
+  {id:'xenon',    label:'Xenon',    cat:'Single', grad:['#7fd0ff','#9aa6ff','#e8f4ff']},
+  {id:'radon',    label:'Radon',    cat:'Single', grad:['#f0e39a','#c46b3a','#8a2a1a']},
+  {id:'mercury',  label:'Mercury',  cat:'Single', grad:['#5fe0e0','#bfe8ff','#dff4ff']},
+  {id:'sodium',   label:'Sodium',   cat:'Single', solid:true, grad:['#ffb000','#ffc63b','#ffb000']},
+  {id:'hydrogen', label:'Hydrogen', cat:'Single', grad:['#ff4f8b','#e0264b','#ff6a6a']},
+  {id:'nitrogen', label:'Nitrogen', cat:'Single', grad:['#6a6aff','#a86cff','#ff9ec4']},
+  // --- Blends (complementary pairs). a=first gas, b=second gas (for bg/mover split) ---
+  {id:'xenon_neon',     label:'Xenon · Neon',     cat:'Blend', grad:['#7fd0ff','#9aa6ff','#ff6a2b','#ff4d1a'], a:'#7fd0ff', b:'#ff4d1a'},
+  {id:'argon_sodium',   label:'Argon · Sodium',   cat:'Blend', grad:['#b98cff','#6a5bd0','#ffc63b','#ffb000'], a:'#9a7bff', b:'#ffb000'},
+  {id:'mercury_hydrogen',label:'Mercury · Hydrogen',cat:'Blend',grad:['#5fe0e0','#bfe8ff','#ff4f8b','#e0264b'], a:'#5fe0e0', b:'#ff3b6b'},
+  {id:'krypton_helium', label:'Krypton · Helium', cat:'Blend', grad:['#cfe6ff','#9fb6a8','#ffd9b0','#ff9ec4'], a:'#bfe0d8', b:'#ffc0a8'},
+  {id:'xenon_sodium',   label:'Xenon · Sodium',   cat:'Blend', grad:['#7fd0ff','#9aa6ff','#ffc63b','#ffb000'], a:'#7fd0ff', b:'#ffb000'},
+  {id:'argon_neon',     label:'Argon · Neon',     cat:'Blend', grad:['#b98cff','#6a5bd0','#ff6a2b','#ff4d1a'], a:'#9a7bff', b:'#ff4d1a'},
+  // --- Spectrum ---
+  {id:'spectrum', label:'Spectrum', cat:'Spectrum',
+   grad:['#ff3b3b','#ff8c3b','#ffe23b','#46d97a','#3fe0e0','#6a6aff','#b06cff','#ff3b3b']},
+];
+const LED_BY_ID=Object.fromEntries(LED_CATALOG.map(o=>[o.id,o]));
+// Pulse effects (motion styles for the LED ring + dial glow). The intensity
+// ramp (idle->inhale) modulates speed & brightness universally on top of these.
+const EFFECTS=[
+  {id:'solid',     label:'Solid',         desc:'Still, brightens on draw'},
+  {id:'breathing', label:'Breathing',     desc:'Always alive, swells on draw'},
+  {id:'comet',     label:'Comet',         desc:'A point + tail orbits'},
+  {id:'dots',      label:'Orbiting Dots', desc:'Three dots circle'},
+  {id:'sweep',     label:'Sweep',         desc:'A lit arc rotates'},
+  {id:'telemetry', label:'Telemetry',     desc:'Pulses like a heartbeat'},
+];
+const EFFECT_BY_ID=Object.fromEntries(EFFECTS.map(e=>[e.id,e]));
+// Map legacy pulse-name strings (from old profiles) to effect ids.
+function pulseToEffect(p){
+  if(!p)return 'solid';
+  const s=p.toLowerCase();
+  if(s.includes('breath'))return 'breathing';
+  if(s.includes('orbit')||s.includes('rotat'))return 'comet';
+  if(s.includes('telemetry')||s.includes('haptic'))return 'telemetry';
+  return 'solid';
+}
+// Build a CSS conic-gradient string for a catalog entry's disc swatch.
+function ledConic(o){
+  const n=o.grad.length;
+  const stops=o.grad.map((c,i)=>`${c} ${Math.round(i/(n-1)*360)}deg`).join(',');
+  return `conic-gradient(from 0deg, ${stops})`;
+}
+// Resolve the display color(s) for the active LED mode. Thermal returns the
+// live temp color; everything else returns its fixed gradient.
+function ledGlowColor(id,liveTemp){
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  if(o.thermal) return tempColor(liveTemp);
+  return o.grad[Math.floor(o.grad.length/2)]; // representative mid color for glow
+}
+function hexRGB(h){
+  h=h.replace('#','');
+  if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+}
+// The live glow color for the dial, based on the active dashboard LED mode.
+function activeGlowRGB(){
+  const o=LED_BY_ID[S.led]||LED_BY_ID.thermal;
+  if(o.thermal) return tempRGB(S.temp);
+  // gas/blend/spectrum: cycle through the gradient's colors over time for life,
+  // but keep it subtle — use the mid color as the anchor.
+  return hexRGB(o.grad[Math.floor(o.grad.length/2)]);
+}
+
 /* ============ STATE ============ */
 const S={state:'IDLE',temp:72,flux:0,target:450,window:60,remaining:60,
   peak:0,sum:0,n:0,hist:[],rec:[],holding:false,startTs:0,
-  curve:'steady', inhale:0, drawTarget:450};
+  curve:'steady', inhale:0, drawTarget:450, led:'thermal', effect:'solid', glowI:0,
+  validPuffs:0, sessionDrawMs:0, drawStartMs:0,
+  swap:{comet:false,dots:false,sweep:false}};
 let target=450,windowS=60;
 
 /* ============ DIAL ============ */
@@ -432,6 +613,144 @@ const TARC_S=-Math.PI*1.15, TARC_E=Math.PI*0.15;
 // Time arc: bottom 1/3, drawn counter-clockwise from bottom-left to bottom-right.
 const WARC_A=Math.PI*0.65, WARC_B=Math.PI*0.35;
 function var_cyan(){return getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim()||'#3fe0e0';}
+/* ---- glow-ring engine (renders the LED halo + drives effects) ---- */
+const glowCv=document.getElementById('glowCanvas'),gx=glowCv.getContext('2d');
+const GC=420; // glow canvas css px; drawn at 2x; large enough the bloom never clips
+glowCv.width=GC*2;glowCv.height=GC*2;gx.scale(2,2);
+function glowRGB(){
+  const o=LED_BY_ID[S.led]||LED_BY_ID.thermal;
+  if(o.thermal)return tempRGB(S.temp);
+  return hexRGB(o.grad[Math.floor(o.grad.length/2)]);
+}
+// A color sampler around the ring: t in 0..1 -> [r,g,b]. Thermal uses the live
+// temp color everywhere; gases/blends/spectrum sweep their gradient around.
+// ---- Two-layer color model ----
+// Every effect has a BACKGROUND (always lit, seamless loop around the ring) and
+// moving effects add a brighter MOVER on top. Single gas: bg = dim shade-loop of
+// the hue, mover = same hue bright. Blend: bg = color A, mover = color B (swap flips).
+function scaleRGB(c,k){return [Math.min(255,Math.round(c[0]*k)),Math.min(255,Math.round(c[1]*k)),Math.min(255,Math.round(c[2]*k))];}
+function mix(a,b,f){return [Math.round(a[0]+(b[0]-a[0])*f),Math.round(a[1]+(b[1]-a[1])*f),Math.round(a[2]+(b[2]-a[2])*f)];}
+// Sample a stop array as a SEAMLESS loop (palindrome: a,b,c,b -> wraps to a), so
+// position 0 and 1 match and there's no visible seam line.
+function loopSample(stops,t){
+  if(stops.length===1)return stops[0];
+  const mirror=stops.concat(stops.slice(1,-1).reverse());
+  const f=((t%1)+1)%1;
+  const seg=f*mirror.length;
+  const i=Math.floor(seg)%mirror.length;
+  const j=(i+1)%mirror.length;
+  return mix(mirror[i],mirror[j],seg-i);
+}
+// Background color at ring position t (0..1) for the active LED option.
+function bgColorAt(id,t,swap){
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  // subtle light/shade ripple around the ring (keeps any bg from looking flat)
+  const ripple=0.86+0.14*(0.5+0.5*Math.cos(((t%1))*Math.PI*2));
+  if(o.thermal){
+    // thermal: the live temp color with gentle around-the-ring gradation (never flat)
+    return scaleRGB(tempRGB(S.temp),ripple);
+  }
+  if(o.cat==='Blend'){
+    // blends: VIBRANT background (color A), only slightly under the mover
+    const base=hexRGB(swap?o.b:o.a);
+    return scaleRGB(base,ripple*0.92);
+  }
+  if(o.cat==='Spectrum'){return scaleRGB(loopSample(o.grad.map(hexRGB),t),0.6);}
+  // single gas: intentionally DIM subtle shade-loop so the bright mover stands out
+  return scaleRGB(loopSample(o.grad.map(hexRGB),t),0.4);
+}
+// The bright moving-element color for the active LED option.
+function moverColor(id,swap){
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  if(o.thermal)return tempRGB(S.temp);
+  if(o.cat==='Blend')return hexRGB(swap?o.a:o.b);
+  if(o.cat==='Spectrum')return [255,255,255];
+  let best=hexRGB(o.grad[0]),bl=0;
+  o.grad.forEach(h=>{const c=hexRGB(h);const l=c[0]+c[1]+c[2];if(l>bl){bl=l;best=c;}});
+  return best;
+}
+// Legacy single-color sampler kept for the simple slide glow.
+function ledColorAt(id,t){
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  if(o.thermal)return tempRGB(S.temp);
+  return loopSample(o.grad.map(hexRGB),t);
+}
+// Shared effect renderer — used by the main dial halo AND the picker previews.
+// Draws a lit background ring (seamless loop) then a brighter mover on top for
+// moving effects. id+swap select the colors via the two-layer model.
+// offscreen buffers (keyed by size) for compositing the feathered background band
+const _bgBufs={};
+function _getBuf(S){
+  if(!_bgBufs[S]){const c=document.createElement('canvas');c.width=S;c.height=S;_bgBufs[S]={c,x:c.getContext('2d')};}
+  return _bgBufs[S];
+}
+function paintEffect(ctx,GCsize,rr,eff,id,swap,I,now){
+  const cx=GCsize/2, cy=GCsize/2;
+  const baseA=0.12+I*0.6, spd=0.6+I*2.6;
+  const mc=moverColor(id,swap);
+  const o=LED_BY_ID[id]||LED_BY_ID.thermal;
+  const vibrantBg = o.thermal || o.cat==='Blend' || o.cat==='Spectrum';
+  const moving = (eff==='comet'||eff==='dots'||eff==='sweep');
+  // bright additive blob (the mover)
+  const blob=(bx,by,size,alpha,col)=>{
+    const g=ctx.createRadialGradient(bx,by,0,bx,by,size);
+    g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${alpha})`);
+    g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,size,0,7);ctx.fill();};
+  // background glow band — conic-colored ring on an offscreen buffer, feathered
+  // with a radial alpha mask = perfectly smooth, true color, no steps.
+  const bgRing=(thick,mult)=>{
+    const a=Math.min(0.95,baseA*mult*(vibrantBg?1.4:0.55));
+    const dpr=2, S=Math.round(GCsize*dpr);
+    const buf=_getBuf(S), bx=buf.x;
+    bx.setTransform(dpr,0,0,dpr,0,0);
+    bx.clearRect(0,0,GCsize,GCsize);
+    let cg; try{cg=bx.createConicGradient(-Math.PI/2,cx,cy);}catch(e){cg=null;}
+    if(!cg){ const N=96;for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+1)/N*Math.PI*2;const c=bgColorAt(id,i/N,swap);
+        ctx.strokeStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`;ctx.lineWidth=thick*2;ctx.beginPath();ctx.arc(cx,cy,rr,a0,a1);ctx.stroke();}return;}
+    const N=24;for(let i=0;i<=N;i++){const c=bgColorAt(id,i/N,swap);cg.addColorStop(i/N,`rgb(${c[0]},${c[1]},${c[2]})`);}
+    bx.fillStyle=cg;
+    bx.beginPath();bx.arc(cx,cy,rr+thick*2.4,0,Math.PI*2);bx.arc(cx,cy,Math.max(0,rr-thick*2.4),0,Math.PI*2,true);bx.fill();
+    bx.globalCompositeOperation='destination-in';
+    const rg=bx.createRadialGradient(cx,cy,Math.max(0,rr-thick*2.4),cx,cy,rr+thick*2.4);
+    rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(0.5,`rgba(0,0,0,${a})`);rg.addColorStop(1,'rgba(0,0,0,0)');
+    bx.fillStyle=rg;bx.beginPath();bx.arc(cx,cy,rr+thick*2.4,0,Math.PI*2);bx.fill();
+    bx.globalCompositeOperation='source-over';
+    ctx.drawImage(buf.c,0,0,GCsize,GCsize);
+  };
+  const tk=rr*0.2;
+  // ---- background layer (normal compositing) ----
+  ctx.globalCompositeOperation='source-over';
+  if(eff==='breathing'){ const b=0.55+0.45*(0.5+0.5*Math.sin(now/1000*spd*1.1)); bgRing(tk*0.85, b*1.2); }
+  else if(eff==='telemetry'){ const rate=0.8+I*2.2, ph=(now/1000*rate)%1, blip=Math.max(0,1-ph*6); bgRing(tk*0.85, 0.55+blip*1.1); }
+  else if(moving){ bgRing(tk*0.85, 0.85); }
+  else { bgRing(tk*0.85, 1.0); }
+  // ---- mover layer (additive, vivid concentrated core) ----
+  ctx.globalCompositeOperation='lighter';
+  const A=(ang)=>[cx+rr*Math.cos(ang),cy+rr*Math.sin(ang)];
+  if(eff==='comet'){
+    const head=now/1000*spd*1.3;
+    for(let i=10;i>=1;i--){const [x,y]=A(head-i*0.10);blob(x,y,rr*0.16,baseA*(1-i/11)*0.5,mc);}
+    const [hx,hy]=A(head);
+    blob(hx,hy,rr*0.30,0.85,mc);
+    blob(hx,hy,rr*0.12,1.0,mc);
+  }
+  else if(eff==='dots'){
+    const rot=now/1000*spd;
+    for(let k=0;k<3;k++){const [x,y]=A(rot+k*(Math.PI*2/3));blob(x,y,rr*0.28,0.8,mc);blob(x,y,rr*0.12,1.0,mc);}
+  }
+  else if(eff==='sweep'){
+    const head=now/1000*spd;
+    for(let i=14;i>=1;i--){const [x,y]=A(head-i*(Math.PI/2/15));blob(x,y,rr*0.17,baseA*(1-i/15)*0.5,mc);}
+    const [hx,hy]=A(head);blob(hx,hy,rr*0.22,0.9,mc);blob(hx,hy,rr*0.1,1.0,mc);
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+function renderGlow(now){
+  gx.clearRect(0,0,GC,GC);
+  if(S.glowI<=0.001)return;
+  paintEffect(gx,GC,135,S.effect,S.led,S.swap[S.effect],S.glowI,now);
+}
 function drawDial(){
   dctx.clearRect(0,0,540,540);
   const cx=270,cy=270,rad=210,LW=26;
@@ -487,6 +806,19 @@ function setCurve(mode){
 }
 curveToggle.querySelectorAll('.seg').forEach(b=>{
   b.addEventListener('click',()=>setCurve(b.dataset.curve));
+});
+/* ---- live LED override on the dashboard ---- */
+const liveLedDisc=document.getElementById('liveLedDisc');
+function setLiveLed(id){
+  S.led=LED_BY_ID[id]?id:'thermal';
+  liveLedDisc.style.background=ledConic(LED_BY_ID[S.led]);
+}
+document.getElementById('liveLed').addEventListener('click',()=>{
+  // temporary override; not saved to profile
+  openLedPicker({color:S.led,effect:S.effect,swap:S.swap},
+    (id)=>setLiveLed(id),
+    (eff)=>{S.effect=EFFECT_BY_ID[eff]?eff:'solid';},
+    (eff,val)=>{S.swap[eff]=val;});
 });
 /* ---- pointer-angle dragging directly on the canvas ---- */
 let dialDrag=null; // 'temp' | 'time'
@@ -607,18 +939,18 @@ function loop(now){
   // readouts
   if(S.state!=='IDLE'){hubTemp.innerHTML=`${Math.round(S.temp)}<small>°</small>`;hubTemp.style.color=tempColor(S.temp);}
   hubTime.textContent=`${Math.ceil(S.remaining)}s`;
-  // live glow: matches the live temp color, breathes; faster & stronger while drawing
-  if(running){
-    const [gr,gg,gb]=tempRGB(S.temp);
-    const drawing=S.state==='EXTRACTING';
-    const speed=drawing?2.6:1.4;            // rad/sec
-    const breath=0.5+0.5*Math.sin(now/1000*speed); // 0..1
-    const blur=(drawing?18:12)+breath*(drawing?34:26);
-    const spread=(drawing?2:1)+breath*(drawing?6:4);
-    const alpha=(drawing?0.28:0.16)+breath*(drawing?0.3:0.16);
-    dialWrap.style.boxShadow=`0 0 ${blur.toFixed(0)}px ${spread.toFixed(0)}px rgba(${gr},${gg},${gb},${alpha.toFixed(2)})`;
-    slide.style.boxShadow=`0 0 ${(blur*0.7).toFixed(0)}px ${(spread*0.5).toFixed(0)}px rgba(${gr},${gg},${gb},${(alpha*0.8).toFixed(2)})`;
-  }
+  // glow intensity: faint always-on idle so the LED effect is always previewed
+  // on the dial; rests low during a live session; ramps to full while drawing.
+  let goalI=0.12; // idle baseline (dim)
+  if(running) goalI=(S.state==='EXTRACTING')?1.0:0.34;
+  S.glowI += (goalI-S.glowI)*Math.min(1,dt*(goalI>S.glowI?6:3));
+  renderGlow(now);
+  // slide track glow mirrors intensity & color (only during a live session)
+  if(running && S.glowI>0.01){
+    const [gr,gg,gb]=glowRGB();
+    const a=0.12+S.glowI*0.5;
+    slide.style.boxShadow=`0 0 ${(14+S.glowI*30).toFixed(0)}px ${(1+S.glowI*4).toFixed(0)}px rgba(${gr},${gg},${gb},${a.toFixed(2)})`;
+  }else{ slide.style.boxShadow=''; }
   drawGraph();
   requestAnimationFrame(loop);
 }
@@ -627,18 +959,31 @@ requestAnimationFrame(loop);
 /* hold-to-inhale */
 function holdStart(){
   if(S.state==='HOLDING'||S.state==='PAUSED_EXTRACTING'){
-    S.inhale++; // each press is a fresh inhale
+    S.drawStartMs=performance.now();
+    // crescendo target keys off the puff number this draw WOULD become
+    // (validPuffs+1). If the draw is too short to count, validPuffs doesn't
+    // advance, so the next real draw reuses this same step.
+    const prospective=S.validPuffs+1;
     if(S.curve==='crescendo'){
-      // 1st: target-40, 2nd: target-20, 3rd onward: target
-      const off=S.inhale===1?40:S.inhale===2?20:0;
+      const off=prospective===1?40:prospective===2?20:0;
       S.drawTarget=S.target-off;
     }else{
-      S.drawTarget=S.target; // steady: always full target
+      S.drawTarget=S.target;
     }
     setState('EXTRACTING');
   }
 }
-function holdEnd(){if(S.state==='EXTRACTING'){setState('PAUSED_EXTRACTING');}}
+function holdEnd(){
+  if(S.state==='EXTRACTING'){
+    const dur=performance.now()-S.drawStartMs;
+    if(dur>=MIN_PUFF_MS){
+      // valid puff: count it, record its duration
+      S.validPuffs++;
+      S.sessionDrawMs+=dur;
+    } // else: too short — discarded, crescendo step not advanced
+    setState('PAUSED_EXTRACTING');
+  }
+}
 [hub,lg].forEach(el=>{
   el.addEventListener('mousedown',holdStart);el.addEventListener('touchstart',e=>{e.preventDefault();holdStart();},{passive:false});
   el.addEventListener('mouseup',holdEnd);el.addEventListener('mouseleave',holdEnd);
@@ -648,7 +993,7 @@ function holdEnd(){if(S.state==='EXTRACTING'){setState('PAUSED_EXTRACTING');}}
 /* ============ SLIDE TO SESH ============ */
 const slide=document.getElementById('slide'),thumb=document.getElementById('slideThumb'),
   slideTxt=document.getElementById('slideTxt'),slideFill=document.getElementById('slideFill');
-let dragging=false,running=false;
+let dragging=false,running=false,slideMoved=false,suppressClick=false;
 const SL_PAD=5, SL_THUMB=58;
 function thumbPos(x){
   const r=slide.getBoundingClientRect();
@@ -658,23 +1003,40 @@ function thumbPos(x){
   slideFill.style.width=(p+SL_THUMB)+'px';
   return (p-SL_PAD)/(maxL-SL_PAD);
 }
-function sStart(e){if(running){abortSession();return;}dragging=true;thumb.style.cursor='grabbing';}
-function sMove(e){if(!dragging)return;const x=e.touches?e.touches[0].clientX:e.clientX;thumbPos(x);}
-function sEnd(e){if(!dragging)return;dragging=false;const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+function sStart(e){
+  if(running){abortSession();suppressClick=true;return;}
+  dragging=true;slideMoved=false;thumb.style.cursor='grabbing';
+}
+function sMove(e){if(!dragging)return;slideMoved=true;const x=e.touches?e.touches[0].clientX:e.clientX;thumbPos(x);}
+function sEnd(e){
+  if(!dragging)return;dragging=false;thumb.style.cursor='grab';
+  const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
   const frac=thumbPos(x);
-  if(frac>0.9){startSession();}else{resetSlide();}}
-thumb.addEventListener('mousedown',sStart);thumb.addEventListener('touchstart',e=>{e.preventDefault();sStart(e);},{passive:false});
-window.addEventListener('mousemove',sMove);window.addEventListener('touchmove',sMove,{passive:false});
+  if(frac>0.9){startSession();suppressClick=true;}else{resetSlide();}
+}
+thumb.addEventListener('mousedown',e=>{e.preventDefault();sStart(e);});
+thumb.addEventListener('touchstart',e=>{e.preventDefault();sStart(e);},{passive:false});
+window.addEventListener('mousemove',sMove);window.addEventListener('touchmove',e=>{if(dragging)e.preventDefault();sMove(e);},{passive:false});
 window.addEventListener('mouseup',sEnd);window.addEventListener('touchend',sEnd);
-// Tapping anywhere on the track aborts while a session is running.
-slide.addEventListener('click',()=>{if(running)abortSession();});
+// Tapping the track aborts while running — but ignore the synthetic click that
+// follows a drag/start so a fresh session isn't instantly aborted.
+slide.addEventListener('click',()=>{
+  if(suppressClick){suppressClick=false;return;}
+  if(running)abortSession();
+});
 function resetSlide(){thumb.style.left=SL_PAD+'px';slideFill.style.width=SL_THUMB+'px';}
 function lockSlideRight(){const r=slide.getBoundingClientRect();thumb.style.left=(r.width-SL_THUMB-SL_PAD)+'px';slideFill.style.width='100%';}
+
+/* ============ USAGE STATS (lifetime; demo resets on reload) ============ */
+// In the real product this object would persist to device/cloud storage.
+const STATS={sessions:0, puffs:0, totalDrawMs:0, totalSessionSec:0};
+const MIN_PUFF_MS=500; // a draw under 0.5s doesn't count as a puff
 
 function startSession(){
   running=true;slide.classList.add('run');slideTxt.textContent='Tap to Abort';lockSlideRight();
   dialWrap.classList.add('live');
-  S.peak=0;S.sum=0;S.n=0;S.remaining=S.window;S.rec=[];S.inhale=0;
+  S.peak=0;S.sum=0;S.n=0;S.remaining=S.window;S.rec=[];
+  S.validPuffs=0; S.sessionDrawMs=0; S.drawStartMs=0; // per-session puff tally
   setState('MELTING');
 }
 function abortSession(){completeSession(true);}
@@ -686,10 +1048,25 @@ function downsample(arr,n){
   return out;
 }
 function completeSession(aborted){
-  const data={ts:Date.now(),target:S.target,window:S.window,
-    peak:S.peak,avg:S.n?S.sum/S.n:0,dur:S.window-Math.max(0,S.remaining),
-    profile:currentProfileName,hist:downsample(S.rec,120),aborted};
-  if(S.rec.length>3)pushLog(data);
+  // If the timer ran out mid-draw, commit that puff's actual drawn time.
+  if(S.state==='EXTRACTING' && S.drawStartMs){
+    const dur=performance.now()-S.drawStartMs;
+    if(dur>=MIN_PUFF_MS){S.validPuffs++;S.sessionDrawMs+=dur;}
+    S.drawStartMs=0;
+  }
+  const elapsedSec=S.window-Math.max(0,S.remaining);
+  // A session only counts (and only logs) if at least one valid puff happened.
+  if(S.validPuffs>0){
+    STATS.sessions++;
+    STATS.puffs+=S.validPuffs;
+    STATS.totalDrawMs+=S.sessionDrawMs;
+    STATS.totalSessionSec+=elapsedSec;
+    const data={ts:Date.now(),target:S.target,window:S.window,
+      peak:S.peak,avg:S.n?S.sum/S.n:0,dur:elapsedSec,puffs:S.validPuffs,
+      profile:currentProfileName,hist:downsample(S.rec,120),aborted};
+    pushLog(data);
+    renderStats();
+  }
   running=false;slide.classList.remove('run');slideTxt.textContent='Slide to Sesh';resetSlide();
   dialWrap.classList.remove('live','drawing');
   dialWrap.style.boxShadow='';slide.style.boxShadow='';
@@ -708,12 +1085,24 @@ function pushLog(d){
     <div class="nm">${d.profile}${d.aborted?' · aborted':''}</div>
     <canvas width="640" height="140"></canvas>
     <div class="stats">
+      <div class="stat"><b>${d.puffs}</b><span>Puffs</span></div>
       <div class="stat"><b>${d.peak.toFixed(0)}W</b><span>Peak Flux</span></div>
       <div class="stat"><b>${d.avg.toFixed(0)}W</b><span>Avg Flux</span></div>
       <div class="stat"><b>${d.dur.toFixed(0)}s</b><span>Duration</span></div>
     </div>`;
   logFeed.prepend(card);
   drawMini(card.querySelector('canvas'),d.hist);
+}
+// Update the lifetime stats header.
+function renderStats(){
+  document.getElementById('stPuffs').textContent=STATS.puffs;
+  document.getElementById('stSessions').textContent=STATS.sessions;
+  const pps=STATS.sessions?STATS.puffs/STATS.sessions:0;
+  document.getElementById('stPPS').textContent=pps.toFixed(1);
+  const len=STATS.sessions?STATS.totalSessionSec/STATS.sessions:0;
+  document.getElementById('stLen').textContent=len.toFixed(0)+'s';
+  const pdur=STATS.puffs?(STATS.totalDrawMs/STATS.puffs/1000):0;
+  document.getElementById('stDur').textContent=pdur.toFixed(1)+'s';
 }
 function drawMini(cv,hist){
   const c=cv.getContext('2d'),W=640,H=140;c.clearRect(0,0,W,H);
@@ -727,10 +1116,10 @@ function drawMini(cv,hist){
 /* ============ PROFILES / VAULT ============ */
 // Factory defaults for each hardware slot. White runs the hottest.
 const FACTORY={
-  blue:{name:'Cyan Cruise',temp:375,time:45,led:'blue',slot:'blue',pulse:'Solid Continuous Burn',curve:'Steady Linear Delivery'},
-  orange:{name:'Amber Arc',temp:430,time:70,led:'orange',slot:'orange',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery'},
-  red:{name:'Crimson Core',temp:490,time:90,led:'red',slot:'red',pulse:'Haptic Pulse Telemetry',curve:'Crescendo Micro-Ramp Step'},
-  white:{name:'Titan Max',temp:545,time:120,led:'white',slot:'white',pulse:'Rotating Orbit Tracking Loop',curve:'Crescendo Micro-Ramp Step'},
+  blue:{name:'Cyan Cruise',temp:375,time:45,led:'thermal',slot:'blue',pulse:'Solid Continuous Burn',curve:'Steady Linear Delivery'},
+  orange:{name:'Amber Arc',temp:430,time:70,led:'thermal',slot:'orange',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery'},
+  red:{name:'Crimson Core',temp:490,time:90,led:'thermal',slot:'red',pulse:'Haptic Pulse Telemetry',curve:'Crescendo Micro-Ramp Step'},
+  white:{name:'Titan Max',temp:545,time:120,led:'thermal',slot:'white',pulse:'Rotating Orbit Tracking Loop',curve:'Crescendo Micro-Ramp Step'},
 };
 const slotDefaults=()=>JSON.parse(JSON.stringify(FACTORY)); // deep copy on demand
 let presets=[
@@ -738,15 +1127,18 @@ let presets=[
 ];
 // A few inactive example recipes pre-loaded in the library.
 let vault=[
-  {name:'Morning Microdose',temp:360,time:40,led:'green',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery',slot:''},
-  {name:'Evening Flow',temp:415,time:75,led:'amethyst',pulse:'Rotating Orbit Tracking Loop',curve:'Steady Linear Delivery',slot:''},
-  {name:'Terpene Saver',temp:385,time:55,led:'cyan',pulse:'Solid Continuous Burn',curve:'Crescendo Micro-Ramp Step',slot:''},
+  {name:'Morning Microdose',temp:360,time:40,led:'krypton',pulse:'Slow Breathing Thermal Wave',curve:'Steady Linear Delivery',slot:''},
+  {name:'Evening Flow',temp:415,time:75,led:'argon',pulse:'Rotating Orbit Tracking Loop',curve:'Steady Linear Delivery',slot:''},
+  {name:'Terpene Saver',temp:385,time:55,led:'xenon',pulse:'Solid Continuous Burn',curve:'Crescendo Micro-Ramp Step',slot:''},
 ];
 const presetList=document.getElementById('presetList'),vaultList=document.getElementById('vaultList');
 
 function loadProfile(p){
   target=p.temp;windowS=p.time;currentProfileName=p.name;
   setCurve(p.curve&&p.curve.indexOf('Crescendo')>-1?'crescendo':'steady');
+  setLiveLed(p.led||'thermal'); // loading a profile resets the live LED override
+  S.effect=p.effect&&EFFECT_BY_ID[p.effect]?p.effect:pulseToEffect(p.pulse);
+  S.swap=Object.assign({comet:false,dots:false,sweep:false},p.swap||{});
   syncDial();
   goto(1);
 }
@@ -759,14 +1151,15 @@ function renderProfiles(){
 }
 function makeRow(p,type,i){
   const row=document.createElement('div');row.className='prow'+(type==='vault'?' vaultitem':'');
-  const dotCls=p.led||p.slot||'white';
+  const led=LED_BY_ID[p.led]||LED_BY_ID.thermal;
+  const dotStyle=`background:${ledConic(led)}`;
   const curveLabel=p.curve&&p.curve.indexOf('Crescendo')>-1?'Crescendo':'Steady';
   const slotNum={blue:1,orange:2,red:3,white:4};
   const badge=type==='preset'
     ? `<div class="slotbadge ${p.slot}">Slot ${slotNum[p.slot]}</div>`
     : '';
   row.innerHTML=`<div class="wrench">🔧</div>
-    <div class="content"><div class="dot ${dotCls}"></div>
+    <div class="content"><div class="dot disc" style="${dotStyle}"></div>
     <div class="pinfo"><b>${p.name}</b><span>${p.temp}°F · ${p.time}s · ${curveLabel}</span></div>${badge}</div>`;
   const content=row.querySelector('.content');
   // tap to load
@@ -792,33 +1185,52 @@ renderProfiles();
 
 /* ============ CONFIG MODAL ============ */
 const cfgModal=document.getElementById('cfgModal');
-const f={name:'f_name',temp:'f_temp',time:'f_time',led:'f_led',pulse:'f_pulse',curve:'f_curve',slot:'f_slot'};
+const f={name:'f_name',temp:'f_temp',time:'f_time',pulse:'f_pulse',curve:'f_curve',slot:'f_slot'};
 const F={};for(const k in f)F[k]=document.getElementById(f[k]);
 const cfgTitle=document.getElementById('cfgTitle'),cfgDel=document.getElementById('cfgDel');
 let editing=null; // {type,i} or null
+let cfgLedId='thermal'; // current LED color selection in the editor
+let cfgEffect='solid';  // current LED effect selection in the editor
+let cfgSwap={comet:false,dots:false,sweep:false}; // per-effect color swap in editor
+const f_ledDisc=document.getElementById('f_ledDisc'),f_ledLabel=document.getElementById('f_ledLabel');
+function renderCfgLed(){
+  const o=LED_BY_ID[cfgLedId]||LED_BY_ID.thermal;
+  f_ledDisc.style.background=ledConic(o);
+  f_ledLabel.textContent=o.label;
+}
 F.temp.addEventListener('input',()=>document.getElementById('f_tempval').textContent=F.temp.value+'°F');
 F.time.addEventListener('input',()=>document.getElementById('f_timeval').textContent=F.time.value+'s');
 function openConfig(type,i){
   closeOthers(null);
   if(type==null){editing=null;cfgTitle.textContent='New Profile';
-    F.name.value='';F.temp.value=450;F.time.value=60;F.led.value='cyan';F.pulse.selectedIndex=0;F.curve.selectedIndex=0;F.slot.value='';
+    F.name.value='';F.temp.value=450;F.time.value=60;cfgLedId='thermal';cfgEffect='solid';cfgSwap={comet:false,dots:false,sweep:false};F.pulse.selectedIndex=0;F.curve.selectedIndex=0;F.slot.value='';
     cfgDel.style.display='none';}
   else{const p=(type==='preset'?presets:vault)[i];editing={type,i};
     cfgTitle.textContent='Edit Profile';
     F.name.value=p.name;F.temp.value=p.temp;F.time.value=p.time;
-    F.led.value=p.led||'cyan';F.slot.value=p.slot||'';
+    cfgLedId=LED_BY_ID[p.led]?p.led:'thermal';F.slot.value=p.slot||'';
+    cfgEffect=pulseToEffect(p.pulse);
+    cfgSwap=Object.assign({comet:false,dots:false,sweep:false},p.swap||{});
     F.pulse.value=p.pulse||F.pulse.options[0].value;F.curve.value=p.curve||F.curve.options[0].value;
     if(type==='preset'){F.slot.value=p.slot;cfgDel.textContent='Remove & Reset Slot';cfgDel.style.display='block';}
     else{cfgDel.textContent='Delete';cfgDel.style.display='block';}}
+  renderCfgLed();
   document.getElementById('f_tempval').textContent=F.temp.value+'°F';
   document.getElementById('f_timeval').textContent=F.time.value+'s';
   cfgModal.classList.add('open');
 }
 document.getElementById('addBtn').addEventListener('click',()=>openConfig(null));
 document.getElementById('cfgCancel').addEventListener('click',()=>cfgModal.classList.remove('open'));
+// open LED picker from the editor field (color + effect tabs)
+document.getElementById('f_led').addEventListener('click',()=>{
+  openLedPicker({color:cfgLedId,effect:cfgEffect,swap:cfgSwap},
+    (id)=>{cfgLedId=id;renderCfgLed();},
+    (eff)=>{cfgEffect=eff;},
+    (eff,val)=>{cfgSwap[eff]=val;});
+});
 document.getElementById('cfgSave').addEventListener('click',()=>{
   const p={name:F.name.value||'Untitled',temp:+F.temp.value,time:+F.time.value,
-    led:F.led.value,pulse:F.pulse.value,curve:F.curve.value,slot:F.slot.value};
+    led:cfgLedId,effect:cfgEffect,swap:Object.assign({},cfgSwap),pulse:F.pulse.value,curve:F.curve.value,slot:F.slot.value};
   if(editing&&editing.type==='preset'){
     // editing an on-device preset: slot stays fixed to that row
     p.slot=presets[editing.i].slot;
@@ -846,6 +1258,103 @@ cfgDel.addEventListener('click',()=>{
   cfgModal.classList.remove('open');renderProfiles();
 });
 
+/* ============ LED PICKER ============ */
+const ledModal=document.getElementById('ledModal'),ledList=document.getElementById('ledList'),effectList=document.getElementById('effectList');
+let ledColorCb=null, ledEffectCb=null, ledSwapCb=null;
+let ledCurColor='thermal', ledCurEffect='solid', ledCurSwap={comet:false,dots:false,sweep:false};
+let effPreviews=[]; // {ctx,eff} for animation while open
+let effRAF=null;
+const MOVING_EFFECTS=['comet','dots','sweep'];
+function buildLedList(){
+  ledList.innerHTML='';
+  const cats=[['Reactive','Reactive'],['Single','Single Gases'],['Blend','Complementary Blends'],['Spectrum','Spectrum']];
+  cats.forEach(([key,title])=>{
+    const items=LED_CATALOG.filter(o=>o.cat===key);
+    if(!items.length)return;
+    const g=document.createElement('div');g.className='ledgroup';g.textContent=title;ledList.appendChild(g);
+    items.forEach(o=>{
+      const row=document.createElement('div');
+      row.className='ledopt'+(o.id===ledCurColor?' sel':'');
+      const sub=o.thermal?'Tracks live temperature':(o.cat==='Blend'?'Two-gas gradient':o.cat==='Spectrum'?'Full color sweep':'Emission spectrum');
+      row.innerHTML=`<span class="disc" style="background:${ledConic(o)}"></span>
+        <span><span class="lname">${o.label}</span><br><span class="lsub">${sub}</span></span>
+        <span class="chk">●</span>`;
+      row.addEventListener('click',()=>{
+        ledCurColor=o.id;
+        ledList.querySelectorAll('.ledopt').forEach(r=>r.classList.remove('sel'));
+        row.classList.add('sel');
+        if(ledColorCb)ledColorCb(o.id);
+        buildEffectList(); // refresh swap pills (enabled only for blends)
+      });
+      ledList.appendChild(row);
+    });
+  });
+}
+function isBlend(id){return (LED_BY_ID[id]||{}).cat==='Blend';}
+function buildEffectList(){
+  effectList.innerHTML='';effPreviews=[];
+  const blend=isBlend(ledCurColor);
+  EFFECTS.forEach(e=>{
+    const row=document.createElement('div');
+    row.className='effopt'+(e.id===ledCurEffect?' sel':'');
+    const canSwap=MOVING_EFFECTS.includes(e.id);
+    const swapPill=canSwap
+      ? `<button class="swappill${ledCurSwap[e.id]?' on':''}${blend?'':' off'}" data-eff="${e.id}">⇄ Swap</button>`
+      : '';
+    row.innerHTML=`<canvas width="96" height="96"></canvas>
+      <span class="einfo"><span class="ename">${e.label}</span><br><span class="esub">${e.desc}</span>${swapPill}</span>
+      <span class="chk">●</span>`;
+    const cv=row.querySelector('canvas');const ctx=cv.getContext('2d');ctx.scale(2,2);
+    effPreviews.push({ctx,eff:e.id});
+    // selecting the effect (ignore taps on the swap pill)
+    row.addEventListener('click',(ev)=>{
+      if(ev.target.classList.contains('swappill'))return;
+      ledCurEffect=e.id;
+      effectList.querySelectorAll('.effopt').forEach(r=>r.classList.remove('sel'));
+      row.classList.add('sel');
+      if(ledEffectCb)ledEffectCb(e.id);
+    });
+    // swap pill (only acts for blends)
+    const pill=row.querySelector('.swappill');
+    if(pill)pill.addEventListener('click',(ev)=>{
+      ev.stopPropagation();
+      if(!isBlend(ledCurColor))return; // inert for single gas
+      ledCurSwap[e.id]=!ledCurSwap[e.id];
+      pill.classList.toggle('on',ledCurSwap[e.id]);
+      if(ledSwapCb)ledSwapCb(e.id,ledCurSwap[e.id]);
+    });
+    effectList.appendChild(row);
+  });
+}
+function animatePreviews(){
+  const now=performance.now();
+  effPreviews.forEach(p=>{
+    p.ctx.clearRect(0,0,48,48);
+    paintEffect(p.ctx,48,18,p.eff,ledCurColor,ledCurSwap[p.eff]||false,0.85,now);
+  });
+  effRAF=requestAnimationFrame(animatePreviews);
+}
+function openLedPicker(state,onColor,onEffect,onSwap){
+  ledCurColor=state.color||'thermal'; ledCurEffect=state.effect||'solid';
+  ledCurSwap=Object.assign({comet:false,dots:false,sweep:false},state.swap||{});
+  ledColorCb=onColor; ledEffectCb=onEffect; ledSwapCb=onSwap;
+  buildLedList(); buildEffectList();
+  switchLedTab('color');
+  ledModal.classList.add('open');
+  if(effRAF)cancelAnimationFrame(effRAF);
+  animatePreviews();
+}
+function switchLedTab(tab){
+  document.querySelectorAll('.ledtab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  ledList.style.display=tab==='color'?'':'none';
+  effectList.style.display=tab==='effect'?'':'none';
+}
+document.querySelectorAll('.ledtab').forEach(b=>b.addEventListener('click',()=>switchLedTab(b.dataset.tab)));
+document.getElementById('ledClose').addEventListener('click',()=>{
+  ledModal.classList.remove('open');
+  if(effRAF){cancelAnimationFrame(effRAF);effRAF=null;}
+});
+
 /* ============ SETTINGS MODAL ============ */
 const setModal=document.getElementById('setModal');
 document.getElementById('gearBtn').addEventListener('click',()=>setModal.classList.add('open'));
@@ -853,6 +1362,8 @@ document.getElementById('setBack').addEventListener('click',()=>setModal.classLi
 document.querySelectorAll('.srow').forEach(r=>r.addEventListener('click',()=>alert(r.dataset.alert)));
 
 /* ============ INIT ============ */
+setLiveLed('thermal');
+renderStats();
 syncDial();
 </script>
 </body>
