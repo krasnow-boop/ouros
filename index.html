@@ -377,14 +377,41 @@ goto(1);
 })();
 
 /* ============ COLOR CALC ============ */
-function tempRGB(t){ // 350->550 : cyan -> orange -> red -> white, returns [r,g,b]
+// 350-410 cyan | 410-470 orange | 470-530 red | 530-550 white.
+// Cyan->orange handoff is quick and routes through a warm tan (like the
+// reference gradient) rather than saturated green. Stops in HSL: [hue, sat%, light%].
+const TEMP_STOPS=[
+  {pos:0.00, h:[190,55,58]},  // cyan
+  {pos:0.30, h:[190,55,58]},  // hold cyan to 410°F
+  {pos:0.325, h:[55,22,60]},  // very quick desaturated bridge (kills green)
+  {pos:0.36, h:[38,80,60]},   // into orange fast
+  {pos:0.60, h:[28,95,58]},   // orange held to 470°F
+  {pos:0.90, h:[2,88,55]},    // red at 530°F
+  {pos:1.00, h:[20,0,100]},   // white at 550°F
+];
+function lerpHue(a,b,f){ // shortest path around the wheel
+  let d=b-a; if(d>180)d-=360; if(d<-180)d+=360;
+  let h=a+d*f; return (h+360)%360;
+}
+function hsl2rgb(h,s,l){
+  s/=100; l/=100;
+  const k=n=>(n+h/30)%12;
+  const a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  return [Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];
+}
+function tempRGB(t){ // returns [r,g,b]
   const r=Math.max(0,Math.min(1,(t-350)/200));
-  const stops=[[63,224,224],[255,140,59],[255,70,70],[255,255,255]];
-  const seg=1/(stops.length-1);
-  let i=Math.min(stops.length-2,Math.floor(r/seg));
-  const f=(r-i*seg)/seg;
-  const c1=stops[i],c2=stops[i+1];
-  return c1.map((v,k)=>Math.round(v+(c2[k]-v)*f));
+  let a=TEMP_STOPS[0], b=TEMP_STOPS[TEMP_STOPS.length-1];
+  for(let i=0;i<TEMP_STOPS.length-1;i++){
+    if(r>=TEMP_STOPS[i].pos && r<=TEMP_STOPS[i+1].pos){a=TEMP_STOPS[i];b=TEMP_STOPS[i+1];break;}
+  }
+  const span=(b.pos-a.pos)||1;
+  const f=(r-a.pos)/span;
+  const hue=lerpHue(a.h[0],b.h[0],f);
+  const sat=a.h[1]+(b.h[1]-a.h[1])*f;
+  const lit=a.h[2]+(b.h[2]-a.h[2])*f;
+  return hsl2rgb(hue,sat,lit);
 }
 function tempColor(t){
   const m=tempRGB(t);
